@@ -44,7 +44,7 @@ const wchar_t* AppHotkeyDesc(void)    { return L"F11 看大画面   F12 窗口�
 
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int)
 {
-    LogInit(L"bin\\uitest.log");
+    LogInit(L"bin\\dev\\uitest.log");
     RelayLoadSettings();
     RelayStart();          // 只跑透明监视（g_opt.mouseRelay=0 -> 不装钩子、不接管）
     StatusUiShow();

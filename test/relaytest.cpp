@@ -31,7 +31,7 @@ int wmain(int argc, wchar_t** argv)
     for (int i = 1; i < argc; i++)
         if (_wcsicmp(argv[i], L"--accel") == 0) g_opt.mouseAccel = 1;
 
-    LogInit(L"bin\\relaytest.log");
+    LogInit(L"bin\\dev\\relaytest.log");
     RelayLoadSettings();
     if (g_opt.mouseAccel >= 0) RelaySetAccel(g_opt.mouseAccel);
     printf("accel=%d mode=direct\n", RelayGetAccel());
