@@ -353,13 +353,23 @@ LICENSE            MIT 许可（只有这一份，源码里不塞逐文件版权
 
 ## 贡献
 
-欢迎 issue / PR，但这个仓库有两条硬规矩：
+欢迎 issue / PR，但这个仓库有三条硬规矩：
 
 1. **先读 [`src/facts.h`](src/facts.h)**。里面每一条都是实测结论，重写代码可以，重写结论不行。
    新增行为请附证据（日志片段、截图、复现步骤），"我觉得应该这样"的补丁会被打回。
 2. **`.bat` / `.ps1` 保持 ASCII-only**：PowerShell 5.1 按 ANSI 读脚本，`build.bat` 也一样，
    中文注释在这里会变成乱码甚至语法错误。中文留给 `.cpp` / `.md`。
-3. 提交信息用中文写清"**为什么**改"，别只写"优化""修复"。
+3. **提交信息按 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/)**：
+   `type(scope): 中文描述`，**scope 用英文**。
+
+   ```
+   feat(relay): 鼠标中继支持按设备区分灵敏度
+   fix(hotkey): F12 被占用时正确退回 Ctrl+Alt+F12
+   docs(readme): 补充构建失败的排查步骤
+   ```
+
+   类型用 `feat` / `fix` / `docs` / `refactor` / `chore` / `test` / `build` / `perf`；
+   首行控制在 72 列内，正文写清"**为什么**改"，别只写"优化""修复"。
 
 改完请跑一遍 `test\check.ps1`，并在有真实客户端的环境里至少验证一次窗口化 + 键鼠。
 
