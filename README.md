@@ -147,7 +147,9 @@ build.bat OeWinFix2.new.exe     :: 主程序正在运行时，先编到别名，
 | 文件 | 是什么 |
 |---|---|
 | `bin\OeWinFix2.exe` | **就是程序**，双击它 |
-| `bin\OeWinFix2.prev.exe` | 上次换装前的备份，**只在回滚时用**（换装时由 swap.bat 生成） |
+
+**版本管理交给 git**：旧版在提交历史 / tag 里，`bin` 里不再堆 `*.prev.exe`。
+回滚 = `git checkout <tag>` -> `build.bat` -> `swap.bat`。
 
 其余都在 `bin\dev\`（测试工具，平时不用）和 `bin\obj\`（编译中间物，可以整个删掉）。
 开发时的临时命名（`*.new.exe` / `*.pending.exe` 之类）到换装完成就不需要了，删掉即可。
