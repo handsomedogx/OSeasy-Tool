@@ -4,7 +4,7 @@
 #pragma once
 #include <windows.h>
 
-void  LogInit(const wchar_t* path /*NULL/空 = 与 exe 同目录 OeWinFix2.log*/);
+void  LogInit(const wchar_t* path /*NULL/空 = 与 exe 同目录 OSeasy-Tool.log*/);
 void  LogClose(void);
 void  Log(const char* fmt, ...);       // 自动加 [HH:MM:SS] 前缀并写文件
 // 注意：Log() 是**窄字符** printf。不要把 `%ls` 和含中文的宽字符串一起用 ——

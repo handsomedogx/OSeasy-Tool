@@ -27,7 +27,7 @@ void LogInit(const wchar_t* path)
         GetModuleFileNameW(NULL, buf, MAX_PATH);
         wchar_t* slash = wcsrchr(buf, L'\\');
         if (slash) *(slash + 1) = 0; else buf[0] = 0;
-        wcscat_s(buf, MAX_PATH, L"OeWinFix2.log");
+        wcscat_s(buf, MAX_PATH, L"OSeasy-Tool.log");
     }
     g_log = _wfopen(buf, L"a, ccs=UTF-8");
     wcsncpy_s(g_path, MAX_PATH, buf, _TRUNCATE);

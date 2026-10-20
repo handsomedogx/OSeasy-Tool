@@ -1,5 +1,5 @@
 // ============================================================================
-//  relaytest.cpp — 单独验证 src/relay.cpp（不启动主程序、不碰正在跑的 OeWinFix2.exe）
+//  relaytest.cpp — 单独验证 src/relay.cpp（不启动主程序、不碰正在跑的 OSeasy-Tool.exe）
 //
 //  用法: relaytest.exe [--accel]
 //    起 relay 线程 8 秒，每 0.5 秒打印一次统计；--relay-force 语义在下面写死：

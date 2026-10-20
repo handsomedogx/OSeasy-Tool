@@ -14,7 +14,7 @@ void RelaySetAccel(int on);
 int  RelayGetAccel(void);
 void RelaySetSens(double factor);   // 灵敏度倍数（0.2 ~ 4.0，默认 1.0 = 设备计数:像素 = 1:1）
 double RelayGetSens(void);
-void RelayLoadSettings(void);      // 启动时从 HKCU\Software\OeWinFix2 读回
+void RelayLoadSettings(void);      // 启动时从 HKCU\Software\OSeasy-Tool 读回
 void RelaySaveSettings(void);      // 改动后写入
 
 // 统计（给状态栏/日志用；任一参数可为 NULL）

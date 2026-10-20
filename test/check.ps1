@@ -1,5 +1,5 @@
 # ============================================================================
-#  check.ps1 - OeWinFix2 regression asserts (ASCII only: Windows PowerShell 5.1
+#  check.ps1 - OSeasy-Tool regression asserts (ASCII only: Windows PowerShell 5.1
 #  reads .ps1 as ANSI, so non-ASCII text in scripts is asking for trouble.)
 #
 #  Asserts:
@@ -18,7 +18,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $bin  = Join-Path $root 'bin'
 $dev  = Join-Path $bin 'dev'          # dev tools live here; bin\ keeps only the program
-$log  = Join-Path $bin 'OeWinFix2.log'
+$log  = Join-Path $bin 'OSeasy-Tool.log'
 $result = New-Object System.Collections.ArrayList
 
 function Assert($name, $ok, $detail) {
@@ -75,10 +75,10 @@ public class T {
 }
 '@
 
-Write-Host "=== OeWinFix2 regression check ==="
+Write-Host "=== OSeasy-Tool regression check ==="
 
 # Precondition: no stale instances (the single-instance mutex would block a new one)
-Get-Process OeWinFix2, FakeBox -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process 'OSeasy-Tool', 'FakeBox' -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 800
 Remove-Item $log -ErrorAction SilentlyContinue
 
@@ -109,7 +109,7 @@ $style0 = [T]::GetWindowLongW($fakeWnd, -16)
 $ex0    = [T]::GetWindowLongW($fakeWnd, -20)
 $r0 = New-Object T+RECT; [void][T]::GetWindowRect($fakeWnd, [ref]$r0)
 
-$ow = Start-Process -FilePath (Join-Path $bin 'OeWinFix2.exe') `
+$ow = Start-Process -FilePath (Join-Path $bin 'OSeasy-Tool.exe') `
                     -ArgumentList '--no-desktop' `
                     -WorkingDirectory $bin -PassThru
 Start-Sleep -Seconds 5

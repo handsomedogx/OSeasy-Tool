@@ -120,7 +120,7 @@ BOOL IsUnderAppDir(const wchar_t* fullPath)
 }
 
 // ---------------------------------------------------------------- 单实例
-#define MUTEX_NAME L"Global\\OeWinFix2_SingleInstance"
+#define MUTEX_NAME L"Global\\OSeasy-Tool_SingleInstance"
 static HANDLE g_mutex = NULL;
 
 BOOL AcquireSingleInstance(void)
@@ -129,7 +129,7 @@ BOOL AcquireSingleInstance(void)
     if (!g_mutex) return TRUE;
     if (GetLastError() == ERROR_ALREADY_EXISTS) {
         // 把已有实例的窗口叫到前台，然后自己退出
-        HWND h = FindWindowW(L"OeWinFix2Status", NULL);
+        HWND h = FindWindowW(L"OSeasy-ToolStatus", NULL);
         if (h) { ShowWindow(h, SW_RESTORE); SetForegroundWindow(h); }
         return FALSE;
     }

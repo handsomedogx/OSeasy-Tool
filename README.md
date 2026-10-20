@@ -1,6 +1,6 @@
 <div align="center">
 
-# OeWinFix2
+# OSeasy-Tool
 
 **Os-Easy 多媒体网络教室 · 学生端修复工具**
 
@@ -17,7 +17,7 @@
 装 `WH_MOUSE_LL` 把真实鼠标事件吞掉、用 `KbFilter.sys` 驱动级锁键盘、把广播窗口全屏置顶。
 结果就是那句熟悉的"上课了，机器不属于你了"。
 
-OeWinFix2 只回头做两件事：**广播窗口 → 普通窗口**、**键盘鼠标救活**。
+OSeasy-Tool 只回头做两件事：**广播窗口 → 普通窗口**、**键盘鼠标救活**。
 
 不改客户端任何文件，不打内存补丁，不结束 / 不挂起学生端进程。
 
@@ -25,6 +25,8 @@ OeWinFix2 只回头做两件事：**广播窗口 → 普通窗口**、**键盘�
 > 十来个诊断开关、两层 CLI 解析）全部删掉了；留下来的每条机制都能在
 > [`src/facts.h`](src/facts.h) 与 [`docs/evidence.md`](docs/evidence.md) 里找到实测出处 ——
 > **这个仓库的原则是：没有实测依据的代码不写。**
+>
+> 曾用名 `OeWinFix2`（2026-10-20 改名成 `OSeasy-Tool`）—— 旧帖子、旧日志、旧 exe 里搜到的名字就是它。
 
 ## 目录
 
@@ -65,26 +67,26 @@ OeWinFix2 只回头做两件事：**广播窗口 → 普通窗口**、**键盘�
 
 ### 直接用
 
-1. 拿到 `bin\OeWinFix2.exe`（或者自己[构建](#构建)一份，静态 CRT、拷一个 exe 就能跑）
+1. 拿到 `bin\OSeasy-Tool.exe`（或者自己[构建](#构建)一份，静态 CRT、拷一个 exe 就能跑）
 2. **双击运行** —— 需要管理员权限（清单里已声明 `requireAdministrator`：要下发键盘 IOCTL、要向高完整性窗口注入输入）
 3. 托盘出现图标，状态面板会自动弹一次
 
 托盘图标被 Windows 收进"隐藏的图标"里了？不依赖托盘也能操作：
 
 ```bat
-OeWinFix2.exe --panel    :: 把已在运行的实例的面板叫出来
-OeWinFix2.exe --quit     :: 让已在运行的实例正常退出
+OSeasy-Tool.exe --panel    :: 把已在运行的实例的面板叫出来
+OSeasy-Tool.exe --quit     :: 让已在运行的实例正常退出
 ```
 
 ### 从源码构建
 
 ```bat
 build.bat
-bin\OeWinFix2.exe
+bin\OSeasy-Tool.exe
 ```
 
 需要 MSVC（VS2019 / 2022 / 2026 都行 —— 脚本用 `vswhere` 自动找工具链，也可以用
-`set OWF2_VCVARS=<你的 vcvarsall.bat 路径>` 手动指定）。详见[构建](#构建)。
+`set OST_VCVARS=<你的 vcvarsall.bat 路径>` 手动指定）。详见[构建](#构建)。
 
 ---
 
@@ -128,30 +130,30 @@ bin\OeWinFix2.exe
 ### 命令行
 
 ```bat
-OeWinFix2.exe --status            :: 打印状态后退出
-OeWinFix2.exe --windowize-now     :: 立刻窗口化一次后退出
-OeWinFix2.exe --quit              :: 让已在运行的实例正常退出
-OeWinFix2.exe --panel             :: 让已在运行的实例弹出状态面板
-OeWinFix2.exe --no-panel          :: 启动时不弹面板（默认会弹）
-OeWinFix2.exe --once              :: 各线程跑一轮自检（脚本里用）
-OeWinFix2.exe --no-relay          :: 只要窗口化 + 键盘 + 桌面（鼠标交给系统）
-OeWinFix2.exe --relay-force       :: 不等探测，直接接管鼠标中继（测试用）
-OeWinFix2.exe --accel on          :: 加速曲线打开（默认关 = 线性、灵敏度低）
-OeWinFix2.exe --sens 1.5          :: 灵敏度倍数（默认 1.0 = 设备计数与像素 1:1）
-OeWinFix2.exe --no-windowize      :: 不做窗口化
-OeWinFix2.exe --no-desktop        :: 不夺回输入桌面
-OeWinFix2.exe --no-kbd            :: 不做键盘释放
-OeWinFix2.exe --no-bcast-fix      :: 关掉 B 方案（广播改写）
-OeWinFix2.exe --interval 200      :: 窗口化纠正周期(ms)
-OeWinFix2.exe --desktop-interval 250  :: 桌面检测周期(ms)
-OeWinFix2.exe --kbd-interval 400  :: 键盘释放周期(ms)
-OeWinFix2.exe --w 1280 --h 720    :: 窗口化后的尺寸（默认工作区 80%）
-OeWinFix2.exe --x 100 --y 100     :: 窗口化后的位置（默认居中）
-OeWinFix2.exe --resize            :: 允许守护自动改尺寸位置（默认只修样式，手动窗口化不受影响）
-OeWinFix2.exe --no-tray           :: 不加托盘图标（配合 --once 或脚本用）
-OeWinFix2.exe --verbose           :: 详细日志
-OeWinFix2.exe --log D:\owf2.log   :: 指定日志文件
-OeWinFix2.exe --help              :: 全部开关
+OSeasy-Tool.exe --status            :: 打印状态后退出
+OSeasy-Tool.exe --windowize-now     :: 立刻窗口化一次后退出
+OSeasy-Tool.exe --quit              :: 让已在运行的实例正常退出
+OSeasy-Tool.exe --panel             :: 让已在运行的实例弹出状态面板
+OSeasy-Tool.exe --no-panel          :: 启动时不弹面板（默认会弹）
+OSeasy-Tool.exe --once              :: 各线程跑一轮自检（脚本里用）
+OSeasy-Tool.exe --no-relay          :: 只要窗口化 + 键盘 + 桌面（鼠标交给系统）
+OSeasy-Tool.exe --relay-force       :: 不等探测，直接接管鼠标中继（测试用）
+OSeasy-Tool.exe --accel on          :: 加速曲线打开（默认关 = 线性、灵敏度低）
+OSeasy-Tool.exe --sens 1.5          :: 灵敏度倍数（默认 1.0 = 设备计数与像素 1:1）
+OSeasy-Tool.exe --no-windowize      :: 不做窗口化
+OSeasy-Tool.exe --no-desktop        :: 不夺回输入桌面
+OSeasy-Tool.exe --no-kbd            :: 不做键盘释放
+OSeasy-Tool.exe --no-bcast-fix      :: 关掉 B 方案（广播改写）
+OSeasy-Tool.exe --interval 200      :: 窗口化纠正周期(ms)
+OSeasy-Tool.exe --desktop-interval 250  :: 桌面检测周期(ms)
+OSeasy-Tool.exe --kbd-interval 400  :: 键盘释放周期(ms)
+OSeasy-Tool.exe --w 1280 --h 720    :: 窗口化后的尺寸（默认工作区 80%）
+OSeasy-Tool.exe --x 100 --y 100     :: 窗口化后的位置（默认居中）
+OSeasy-Tool.exe --resize            :: 允许守护自动改尺寸位置（默认只修样式，手动窗口化不受影响）
+OSeasy-Tool.exe --no-tray           :: 不加托盘图标（配合 --once 或脚本用）
+OSeasy-Tool.exe --verbose           :: 详细日志
+OSeasy-Tool.exe --log D:\ost.log   :: 指定日志文件
+OSeasy-Tool.exe --help              :: 全部开关
 ```
 
 ### 常见问题
@@ -219,7 +221,7 @@ OeWinFix2.exe --help              :: 全部开关
 **加速曲线（开关，默认关）**：系统"提高指针精确度"会按速度放大位移（本机阈值 `6/10` → x2/x4）。
 直驱绕过了它，于是自己复刻：把移动量按 dt 归一成"每 10ms 的计数"当速度再比阈值 ——
 不除以 dt 的话慢速也会被判成高速（实测 `x4` 命中 264/277，指针会飞）。
-选择存 `HKCU\Software\OeWinFix2\MouseAccel`，重启保留。
+选择存 `HKCU\Software\OSeasy-Tool\MouseAccel`，重启保留。
 
 ### 看大画面（F11）—— 为什么不切桌面
 
@@ -276,14 +278,14 @@ B 方案把"全屏广播"改写成"你桌面上的一个窗口"，所以**教学
 
 ```bat
 build.bat                        :: 编主程序 + 三个 dev 工具
-build.bat OeWinFix2.new.exe      :: 主程序正在运行时，先编到别名，之后再换（见 swap.bat）
+build.bat OSeasy-Tool.new.exe      :: 主程序正在运行时，先编到别名，之后再换（见 swap.bat）
 ```
 
 产物：
 
 | 文件 | 是什么 |
 |---|---|
-| `bin\OeWinFix2.exe` | **就是程序**，双击它 |
+| `bin\OSeasy-Tool.exe` | **就是程序**，双击它 |
 | `bin\dev\FakeBox.exe` | 回归测试替身（加载真实 `StudentLogic.dll` 的钩子） |
 | `bin\dev\relaytest.exe` | 中继独立自检 |
 | `bin\dev\uitest.exe` | 只画面板，验收界面用 |
@@ -295,7 +297,7 @@ build.bat OeWinFix2.new.exe      :: 主程序正在运行时，先编到别名�
 **换装**（主程序正在跑、又不能杀它时）：
 
 ```bat
-build.bat OeWinFix2.new.exe     :: 1) 编到别名
+build.bat OSeasy-Tool.new.exe     :: 1) 编到别名
 swap.bat                        :: 2) 退出托盘程序后运行：换新 exe -> 启动
 ```
 

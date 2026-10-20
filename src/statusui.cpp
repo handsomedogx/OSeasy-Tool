@@ -41,7 +41,7 @@
 #define IDC_QUIT     1010
 #define IDC_TIMER    1020
 
-#define CLS_STATUSUI L"OeWinFix2StatusUi"
+#define CLS_STATUSUI L"OSeasy-ToolStatusUi"
 
 static HWND g_wnd = NULL, g_status = NULL, g_relayChk = NULL, g_accelChk = NULL, g_sensEdit = NULL;
 static HWND g_btnPanic = NULL, g_btnDesk = NULL, g_btnFix = NULL, g_btnLog = NULL, g_btnQuit = NULL;
@@ -254,7 +254,7 @@ static LRESULT CALLBACK UiProc(HWND h, UINT m, WPARAM w, LPARAM l)
             } else {
                 // 路线 C：看大画面 —— 广播窗口在工作区内铺满/还原，不切桌面
                 if (WindowizeToggleMaximize() == 0)
-                    MessageBoxW(h, L"当前没有广播窗口可放大。", L"OeWinFix2",
+                    MessageBoxW(h, L"当前没有广播窗口可放大。", L"OSeasy-Tool",
                                 MB_ICONINFORMATION | MB_OK);
             }
         } else if (id == IDC_OPENLOG) {
@@ -322,7 +322,7 @@ void StatusUiShow(void)
     if (x < 0) x = 0;
     if (y < 0) y = 0;
 
-    g_wnd = CreateWindowExW(0, CLS_STATUSUI, L"OeWinFix2 状态",
+    g_wnd = CreateWindowExW(0, CLS_STATUSUI, L"OSeasy-Tool 状态",
                             WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
                             x, y, w, h, NULL, NULL, GetModuleHandleW(NULL), NULL);
     if (!g_wnd) { Log("ui: 状态面板创建失败 err=%lu", GetLastError()); return; }

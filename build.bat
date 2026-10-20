@@ -1,29 +1,29 @@
 @echo off
 rem ===========================================================================
-rem  build.bat [main.exe] - OeWinFix2 (x86 native, MSVC, static CRT). ASCII only.
+rem  build.bat [main.exe] - OSeasy-Tool (x86 native, MSVC, static CRT). ASCII only.
 rem
 rem  Products:
-rem    bin\OeWinFix2.exe         the program (tray guardian)          <- default
+rem    bin\OSeasy-Tool.exe       the program (tray guardian)          <- default
 rem  Dev tools (not needed for normal use):
 rem    bin\dev\FakeBox.exe       test harness: real StudentLogic.dll mouse hook
 rem    bin\dev\relaytest.exe     standalone self-test of src/relay.cpp
 rem    bin\dev\uitest.exe        status panel only (stubs), for UI work
 rem  Objects go to bin\obj\ (throw-away).
 rem
-rem  Pass a different name when bin\OeWinFix2.exe is running (see swap.bat):
-rem    build.bat OeWinFix2.new.exe
-rem  Toolchain: VS2022 Community by default. Override with the OWF2_VCVARS
-rem  environment variable, otherwise ask vswhere for whatever VC toolset is
-rem  installed (VS2019/2022/2026 all work - the code is plain Win32 + static CRT).
+rem  Pass a different name when bin\OSeasy-Tool.exe is running (see swap.bat):
+rem    build.bat OSeasy-Tool.new.exe
+rem  Toolchain: try VS2022 Community first, else ask vswhere for whatever VC
+rem  toolset is installed (VS2019/2022/2026 all work - plain Win32 + static CRT).
+rem  Either can be overridden with the OST_VCVARS environment variable.
 rem ===========================================================================
 setlocal
 set "VCVARS=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat"
-if defined OWF2_VCVARS set "VCVARS=%OWF2_VCVARS%"
+if defined OST_VCVARS set "VCVARS=%OST_VCVARS%"
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 if not exist "%VCVARS%" if exist "%VSWHERE%" for /f "usebackq delims=" %%i in (`"%VSWHERE%" -latest -products * -property installationPath`) do set "VCVARS=%%i\VC\Auxiliary\Build\vcvarsall.bat"
 set MAIN=%~1
-if "%MAIN%"=="" set MAIN=OeWinFix2.exe
-if not exist "%VCVARS%" ( echo [build] vcvarsall.bat not found - set OWF2_VCVARS & exit /b 1 )
+if "%MAIN%"=="" set MAIN=OSeasy-Tool.exe
+if not exist "%VCVARS%" ( echo [build] vcvarsall.bat not found - set OST_VCVARS & exit /b 1 )
 echo [build] toolchain: %VCVARS%
 call "%VCVARS%" x86 >nul
 if errorlevel 1 ( echo [build] vcvarsall failed & exit /b 1 )
@@ -39,8 +39,8 @@ cl /nologo /utf-8 /O2 /MT /W3 /EHsc /DUNICODE /D_UNICODE ^
    "%~dp0src\statusui.cpp" ^
    /Fe:"%~dp0bin\%MAIN%" /Fo:"%~dp0bin\obj\\" ^
    /link /SUBSYSTEM:WINDOWS /MACHINE:X86 ^
-   /MANIFEST:EMBED /MANIFESTINPUT:"%~dp0src\OeWinFix2.manifest" /MANIFESTUAC:NO
-if errorlevel 1 ( echo [build] OeWinFix2 failed & exit /b 1 )
+   /MANIFEST:EMBED /MANIFESTINPUT:"%~dp0src\OSeasy-Tool.manifest" /MANIFESTUAC:NO
+if errorlevel 1 ( echo [build] OSeasy-Tool failed & exit /b 1 )
 
 echo [build] dev\FakeBox.exe ...
 cl /nologo /utf-8 /O2 /MT /W3 /EHsc /DUNICODE /D_UNICODE ^

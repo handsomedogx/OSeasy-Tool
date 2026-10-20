@@ -1,5 +1,5 @@
 // ============================================================================
-//  OeWinFix2 — 只有两件事
+//  OSeasy-Tool — 只有两件事
 //    ① 全屏广播窗口 -> 窗口化
 //    ② 保证键盘鼠标正常使用（键盘驱动解锁 + 直驱光标鼠标中继）
 //
@@ -70,8 +70,8 @@ static wchar_t g_logPath[MAX_PATH] = L"";
 static double g_sensOpt = -1.0;        // --sens（<0 = 未指定）
 
 // 第二个实例 -> 已有实例：请它弹面板 / 退出（不依赖托盘图标，也不靠 MessageBox 干等）
-#define OWF2_MSG_SHOWUI  (WM_APP + 31)
-#define OWF2_MSG_QUIT    (WM_APP + 32)
+#define OST_MSG_SHOWUI  (WM_APP + 31)
+#define OST_MSG_QUIT    (WM_APP + 32)
 static UINT g_wmTaskbarCreated = 0;
 
 // 判断"事情真的发生了"用观察到的窗口状态，不用命名事件握手
@@ -89,20 +89,20 @@ static BOOL WaitWindow(const wchar_t* cls, DWORD ms, BOOL wantVisible)
 
 static BOOL AskRunningShowPanel(DWORD ms)
 {
-    HWND h = FindWindowW(L"OeWinFix2Status", NULL);
+    HWND h = FindWindowW(L"OSeasy-ToolStatus", NULL);
     if (!h) return FALSE;
-    PostMessageW(h, OWF2_MSG_SHOWUI, 0, 0);
-    return WaitWindow(L"OeWinFix2StatusUi", ms, TRUE);      // 面板真的出现了才算成功
+    PostMessageW(h, OST_MSG_SHOWUI, 0, 0);
+    return WaitWindow(L"OSeasy-ToolStatusUi", ms, TRUE);      // 面板真的出现了才算成功
 }
 
 static BOOL AskRunningQuit(DWORD ms)
 {
-    HWND h = FindWindowW(L"OeWinFix2Status", NULL);
+    HWND h = FindWindowW(L"OSeasy-ToolStatus", NULL);
     if (!h) return FALSE;
-    PostMessageW(h, OWF2_MSG_QUIT, 0, 0);
+    PostMessageW(h, OST_MSG_QUIT, 0, 0);
     DWORD t0 = GetTickCount();
     for (;;) {                                              // 等它的宿主窗口消失
-        if (!FindWindowW(L"OeWinFix2Status", NULL)) return TRUE;
+        if (!FindWindowW(L"OSeasy-ToolStatus", NULL)) return TRUE;
         if (GetTickCount() - t0 >= ms) return FALSE;
         Sleep(50);
     }
@@ -125,7 +125,7 @@ static void ShowStatusBox(void)
 {
     wchar_t s[2048];
     StatusUiBuildText(s, 2048);
-    MessageBoxW(NULL, s, L"OeWinFix2 状态", MB_ICONINFORMATION | MB_OK | MB_SETFOREGROUND);
+    MessageBoxW(NULL, s, L"OSeasy-Tool 状态", MB_ICONINFORMATION | MB_OK | MB_SETFOREGROUND);
 }
 
 // ---------------------------------------------------------------- 托盘
@@ -138,9 +138,9 @@ static void TrayAdd(HWND h)
     g_nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_INFO;
     g_nid.uCallbackMessage = WM_TRAY;
     g_nid.hIcon = LoadIconW(NULL, IDI_APPLICATION);
-    wcsncpy_s(g_nid.szTip, 128, L"OeWinFix2：广播窗口化 + 输入恢复（双击看状态面板）", _TRUNCATE);
+    wcsncpy_s(g_nid.szTip, 128, L"OSeasy-Tool：广播窗口化 + 输入恢复（双击看状态面板）", _TRUNCATE);
     // 第一次启动给一个气泡：否则用户会以为"没有托盘程序"（图标可能被 Windows 收进"隐藏的图标"里）
-    wcsncpy_s(g_nid.szInfoTitle, 64, L"OeWinFix2 已启动", _TRUNCATE);
+    wcsncpy_s(g_nid.szInfoTitle, 64, L"OSeasy-Tool 已启动", _TRUNCATE);
     wcsncpy_s(g_nid.szInfo, 256,
               L"图标在通知区（可能收在“隐藏的图标”里）。双击打开状态面板，面板里也有“退出程序”。", _TRUNCATE);
     g_nid.dwInfoFlags = NIIF_INFO;
@@ -186,7 +186,7 @@ static void TrayMenu(HWND h)
         wchar_t b[128];
         _snwprintf_s(b, 128, _TRUNCATE, L"窗口化：处理了 %d 个窗口", n);
         Log("tray: 窗口复位 -> %d", n);
-        if (n == 0) MessageBoxW(NULL, L"当前没有发现广播窗口（MultiRenderWindowClass）。", L"OeWinFix2", MB_ICONINFORMATION | MB_OK);
+        if (n == 0) MessageBoxW(NULL, L"当前没有发现广播窗口（MultiRenderWindowClass）。", L"OSeasy-Tool", MB_ICONINFORMATION | MB_OK);
         break;
     }
     case IDM_TOGGLE_DESK:
@@ -195,7 +195,7 @@ static void TrayMenu(HWND h)
             if (DesktopIsOurs()) { if (SwitchToClassDesktop()) DesktopHoldReclaim(60000); }
             else ReclaimOwnDesktop();
         } else if (WindowizeToggleMaximize() == 0) {
-            MessageBoxW(NULL, L"当前没有广播窗口可放大。", L"OeWinFix2", MB_ICONINFORMATION | MB_OK);
+            MessageBoxW(NULL, L"当前没有广播窗口可放大。", L"OSeasy-Tool", MB_ICONINFORMATION | MB_OK);
         }
         break;
     case IDM_PANIC:
@@ -208,7 +208,7 @@ static void TrayMenu(HWND h)
         break;
     case IDM_RELAY_ACCEL:
         RelaySetAccel(!RelayGetAccel());
-        RelaySaveSettings();      // 记住选择（HKCU\Software\OeWinFix2\MouseAccel）
+        RelaySaveSettings();      // 记住选择（HKCU\Software\OSeasy-Tool\MouseAccel）
         break;
     case IDM_BCAST_FIX:
         g_opt.bcastFix = g_opt.bcastFix ? 0 : 1;
@@ -236,13 +236,13 @@ static LRESULT CALLBACK HiddenProc(HWND h, UINT m, WPARAM w, LPARAM l)
         return 0;
     }
     // 另一个实例请求我们把面板弹出来
-    if (m == OWF2_MSG_SHOWUI) {
+    if (m == OST_MSG_SHOWUI) {
         Log("ipc: 收到已有实例的“弹面板”请求");
         StatusUiShow();
         return 0;
     }
     // 另一个实例请我们退出（--quit）
-    if (m == OWF2_MSG_QUIT) {
+    if (m == OST_MSG_QUIT) {
         Log("ipc: 收到“退出”请求 -> 正常退出");
         AppRequestExit();
         return 0;
@@ -289,9 +289,9 @@ typedef struct { const wchar_t* name; int* target; } NUMOPT;
 static void Usage(void)
 {
     printf(
-"OeWinFix2 — 教学系统学生端：① 全屏广播窗口化  ② 键盘鼠标恢复正常\n"
+"OSeasy-Tool — 教学系统学生端：① 全屏广播窗口化  ② 键盘鼠标恢复正常\n"
 "\n"
-"用法: OeWinFix2.exe [选项]        （双击 = 托盘守护；本程序需要管理员权限）\n"
+"用法: OSeasy-Tool.exe [选项]        （双击 = 托盘守护；本程序需要管理员权限）\n"
 "\n"
 "功能开关（默认全开）:\n"
 "  --no-windowize           不做窗口化\n"
@@ -408,14 +408,14 @@ static int RunApp(int argc, wchar_t** argv)
 
     LogInit(g_logPath[0] ? g_logPath : NULL);
 
-    // 鼠标加速曲线：默认沿用上次的选择（HKCU\Software\OeWinFix2\MouseAccel），命令行 --accel 可覆盖
+    // 鼠标加速曲线：默认沿用上次的选择（HKCU\Software\OSeasy-Tool\MouseAccel），命令行 --accel 可覆盖
     RelayLoadSettings();
     if (g_opt.mouseAccel >= 0) { RelaySetAccel(g_opt.mouseAccel); RelaySaveSettings(); }
     if (g_sensOpt > 0.0)       { RelaySetSens(g_sensOpt);         RelaySaveSettings(); }
 
     DWORD sess = 0;
     ProcessIdToSessionId(GetCurrentProcessId(), &sess);
-    Log("OeWinFix2 start (pid=%u, elevated=%d, session=%u)",
+    Log("OSeasy-Tool start (pid=%u, elevated=%d, session=%u)",
         (unsigned)GetCurrentProcessId(), IsElevated(), (unsigned)sess);
     if (!IsElevated())
         Log("警告: 当前不是管理员权限 —— 键盘 IOCTL 会失败，且可能无法向高完整性窗口注入输入（请以管理员运行）");
@@ -451,7 +451,7 @@ static int RunApp(int argc, wchar_t** argv)
     if (!AcquireSingleInstance()) {
         // 已有实例在跑：请它把自己的状态面板弹出来。
         // 以前这里只弹一个 MessageBox —— 用户看到"有弹窗但没有托盘程序"，还找不到怎么退出。
-        BOOL handed = AskRunningShowPanel(1200);        Log("另一个 OeWinFix2 已在运行 -> %s", handed ? "已请它弹出状态面板" : "弹状态框后退出");
+        BOOL handed = AskRunningShowPanel(1200);        Log("另一个 OSeasy-Tool 已在运行 -> %s", handed ? "已请它弹出状态面板" : "弹状态框后退出");
         if (!handed) ShowStatusBox();   // 旧版本/对端不响应时退回弹框
         LogClose(); return 0;
     }
@@ -480,9 +480,9 @@ static int RunApp(int argc, wchar_t** argv)
     wc.cbSize = sizeof(wc);
     wc.lpfnWndProc = HiddenProc;
     wc.hInstance = GetModuleHandleW(NULL);
-    wc.lpszClassName = L"OeWinFix2Status";
+    wc.lpszClassName = L"OSeasy-ToolStatus";
     RegisterClassExW(&wc);
-    g_hidden = CreateWindowExW(WS_EX_TOOLWINDOW, L"OeWinFix2Status", L"OeWinFix2", WS_POPUP,
+    g_hidden = CreateWindowExW(WS_EX_TOOLWINDOW, L"OSeasy-ToolStatus", L"OSeasy-Tool", WS_POPUP,
                                0, 0, 0, 0, NULL, NULL, wc.hInstance, NULL);
     // 故意不 ShowWindow：它只是个消息宿主
     if (g_opt.tray && g_hidden) TrayAdd(g_hidden);
@@ -526,7 +526,7 @@ static int RunApp(int argc, wchar_t** argv)
     BcastStop();
     StopAllWorkers(3000);
     TrayRemove();
-    Log("OeWinFix2 exit");
+    Log("OSeasy-Tool exit");
     LogClose();
     return 0;
 }

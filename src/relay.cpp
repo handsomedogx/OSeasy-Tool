@@ -21,7 +21,7 @@
 //    系统的"提高指针精确度"会按速度放大位移（阈值 6/10 -> x2/x4）。直驱绕过了它，
 //    所以这里自己复刻：把移动量按 dt 归一成"每 10ms 的计数"当速度，再比阈值。
 //    归一很关键 —— 不除以 dt 的话慢速也会被判成高速（实测 x4 命中 264/277，指针会飞）。
-//    默认关 = 线性、低灵敏度（用户偏好）；开关状态存 HKCU\Software\OeWinFix2\MouseAccel。
+//    默认关 = 线性、低灵敏度（用户偏好）；开关状态存 HKCU\Software\OSeasy-Tool\MouseAccel。
 //
 //  安全阀（任一触发都不会让鼠标变死）：
 //    * 只有"raw 通路就绪"且"正在接管"才丢原件，缺一个就原样放行；
@@ -47,7 +47,7 @@
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "kernel32.lib")
 
-#define SETTINGS_KEY      L"Software\\OeWinFix2"
+#define SETTINGS_KEY      L"Software\\OSeasy-Tool"
 
 // ---------------------------------------------------------------- 状态
 static volatile LONG g_on = 0;         // 正在接管
@@ -369,9 +369,9 @@ static DWORD WINAPI SinkThreadProc(LPVOID)
     wc.cbSize = sizeof(wc);
     wc.lpfnWndProc = SinkProc;
     wc.hInstance = GetModuleHandleW(NULL);
-    wc.lpszClassName = L"OeWinFix2RawSink";
+    wc.lpszClassName = L"OSeasy-ToolRawSink";
     RegisterClassExW(&wc);
-    g_sinkWnd = CreateWindowExW(0, L"OeWinFix2RawSink", L"", WS_POPUP, 0, 0, 0, 0, NULL, NULL, wc.hInstance, NULL);
+    g_sinkWnd = CreateWindowExW(0, L"OSeasy-ToolRawSink", L"", WS_POPUP, 0, 0, 0, 0, NULL, NULL, wc.hInstance, NULL);
     if (!g_sinkWnd) { Log("relay: raw sink 窗口创建失败 err=%lu", GetLastError()); return 0; }
 
     RAWINPUTDEVICE rid;
