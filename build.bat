@@ -32,11 +32,17 @@ if not exist "%~dp0bin" mkdir "%~dp0bin"
 if not exist "%~dp0bin\obj" mkdir "%~dp0bin\obj"
 if not exist "%~dp0bin\dev" mkdir "%~dp0bin\dev"
 
+echo [build] version resource ...
+rem  cl no longer accepts .rc as a source file (D9024), so run rc.exe separately
+rem  and hand the .res to the linker.
+rc /nologo /fo "%~dp0bin\obj\version.res" "%~dp0src\version.rc"
+if errorlevel 1 ( echo [build] rc failed & exit /b 1 )
+
 echo [build] %MAIN% ...
 cl /nologo /utf-8 /O2 /MT /W3 /EHsc /DUNICODE /D_UNICODE ^
    "%~dp0src\main.cpp" "%~dp0src\log.cpp" "%~dp0src\util.cpp" "%~dp0src\windowize.cpp" ^
    "%~dp0src\desktop.cpp" "%~dp0src\kbd.cpp" "%~dp0src\relay.cpp" "%~dp0src\bcast.cpp" ^
-   "%~dp0src\statusui.cpp" ^
+   "%~dp0src\statusui.cpp" "%~dp0bin\obj\version.res" ^
    /Fe:"%~dp0bin\%MAIN%" /Fo:"%~dp0bin\obj\\" ^
    /link /SUBSYSTEM:WINDOWS /MACHINE:X86 ^
    /MANIFEST:EMBED /MANIFESTINPUT:"%~dp0src\OSeasy-Tool.manifest" /MANIFESTUAC:NO

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <assemblyIdentity type="win32" name="OSeasy-Tool" version="2.0.0.0" processorArchitecture="*"/>
+  <assemblyIdentity type="win32" name="OSeasy-Tool" version="1.0.0.0" processorArchitecture="*"/>
   <description>Teaching-PC fullscreen broadcast windowizer + input recovery</description>
 
   <!-- 必须管理员：键盘封锁是驱动 IOCTL，且要向高完整性窗口注入输入 -->

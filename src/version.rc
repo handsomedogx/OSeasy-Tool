@@ -1,0 +1,36 @@
+// ============================================================================
+//  version.rc — 文件版本资源（资源管理器"详细信息"里能看到，发布包也该有）
+//  只放 ASCII：rc.exe 默认按本地代码页读 .rc，中文会随机器变乱码。
+//  版本号改了这里，记得同步 src\OSeasy-Tool.manifest 里的 assemblyIdentity。
+// ============================================================================
+#include <winver.h>
+
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+FILEFLAGSMASK   0x3fL
+FILEFLAGS       0x0L
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404B0"                    /* 简体中文, Unicode */
+        BEGIN
+            VALUE "CompanyName",      "handsomedog"
+            VALUE "FileDescription",  "OSeasy-Tool - fullscreen broadcast windowizer + input recovery"
+            VALUE "FileVersion",      "1.0.0.0"
+            VALUE "InternalName",     "OSeasy-Tool"
+            VALUE "LegalCopyright",   "Copyright (c) 2026 handsomedog. MIT License."
+            VALUE "OriginalFilename", "OSeasy-Tool.exe"
+            VALUE "ProductName",      "OSeasy-Tool"
+            VALUE "ProductVersion",   "1.0.0.0"
+            VALUE "Comments",         "Windows x86, static CRT, no external dependencies"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END

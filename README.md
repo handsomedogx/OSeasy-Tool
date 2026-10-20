@@ -296,6 +296,18 @@ swap.bat                        :: 2) 退出托盘程序后运行：换新 exe -
 
 `swap.bat` **不会**替你结束正在跑的守护进程；检测到在跑就只打印提示。
 
+**打发布包**：
+
+```bat
+pack.bat 1.0.0
+:: dist\OSeasy-Tool.exe                        单文件版，直接发这个也行
+:: dist\OSeasy-Tool-v1.0.0-win-x86.zip         exe + README.md + LICENSE
+:: dist\SHA256SUMS.txt                         上面两个文件的 sha256
+```
+
+版本号要改**两处**：`src\version.rc`（文件属性里看到的版本资源）和
+`src\OSeasy-Tool.manifest`（`assemblyIdentity`），别只改一处。
+
 ## 测试与验证
 
 > 别在有课的时候跑 —— 它会结束进程、接管鼠标。
