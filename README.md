@@ -355,7 +355,6 @@ test/uitest.cpp    只画面板的壳（把其它模块换成桩，专门验收�
 test/check.ps1     回归断言（ASCII-only：PowerShell 5.1 按 ANSI 读脚本）
 docs/evidence.md   全部实测数据与原始证据索引
 docs/status-panel.png     面板截图
-docs/reference/OsEasy-ToolBox  同类开源工具箱（B 方案的启发来源，仅参考，不参与构建）
 LICENSE            MIT 许可（只有这一份，源码里不塞逐文件版权头）
 ```
 
@@ -382,12 +381,14 @@ LICENSE            MIT 许可（只有这一份，源码里不塞逐文件版权
 
 两个边角，说清楚免得含糊：
 
-* `docs/reference/OsEasy-ToolBox/` 是**别人**的参考实现（只放在仓库里看，不参与构建），
-  版权归原作者，不适用本仓库的 MIT；要抄它的代码请自己去看它那边的声明。
+* 参考项目 [OsEasy-ToolBox](https://github.com/ZiHaoSaMa66/OsEasy-ToolBox) 是**别人**的实现，本仓库
+  **不包含它的任何代码副本**（只在上面的致谢里留链接），版权归原作者，不适用本仓库的 MIT；
+  要抄它的代码请自己去看它那边的声明。
 * 教学系统客户端本身（`Student.exe` / `ScreenRender.exe` / `KbFilter.sys` 等）与本项目无关，
   本项目不重新分发、也不修改它，MIT 自然不覆盖它。
 
 ## 致谢
 
-* [OsEasy-ToolBox](docs/reference/OsEasy-ToolBox) —— B 方案（全屏广播改写成窗口广播）的启发来源；
+* [OsEasy-ToolBox](https://github.com/ZiHaoSaMa66/OsEasy-ToolBox) —— B 方案（全屏广播改写成窗口广播）
+  的启发来源。本仓库**不再放它的副本**，要看实现请直接去原仓库；
 * 旧项目 `OeWinFix` 留下的全套实测日志 —— 没有那些数据，这个版本只能瞎猜。
