@@ -7,7 +7,6 @@ typedef struct _OPTIONS {
     // 功能开关（默认全开）
     int windowize;
     int desktopReclaim;
-    int mirror;
     int mouseRelay;          // 默认**开**: 探测驱动 —— 只在证明客户端在吞事件时才接管，
                              // 平时完全透明（零钩子、零注入）。接管方式是直驱光标(SetCursorPos)。
     int mouseAccel;          // 鼠标加速曲线: 默认**关**(线性 1:1, 灵敏度低但可预测)
@@ -21,7 +20,6 @@ typedef struct _OPTIONS {
     int windowIntervalMs;    // 窗口化纠正周期（默认 200）
     int desktopIntervalMs;   // 桌面检测/夺回周期（默认 250）
     int kbdIntervalMs;       // 键盘释放周期（默认 400）
-    int mirrorFps;           // 镜像帧率（默认 10）
 
     // 窗口化几何：0 表示"工作区 80% 居中"
     int winW, winH, winX, winY;

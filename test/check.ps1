@@ -110,7 +110,7 @@ $ex0    = [T]::GetWindowLongW($fakeWnd, -20)
 $r0 = New-Object T+RECT; [void][T]::GetWindowRect($fakeWnd, [ref]$r0)
 
 $ow = Start-Process -FilePath (Join-Path $bin 'OeWinFix2.exe') `
-                    -ArgumentList '--no-desktop','--no-mirror' `
+                    -ArgumentList '--no-desktop' `
                     -WorkingDirectory $bin -PassThru
 Start-Sleep -Seconds 5
 

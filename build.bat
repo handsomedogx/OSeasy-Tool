@@ -12,13 +12,19 @@ rem  Objects go to bin\obj\ (throw-away).
 rem
 rem  Pass a different name when bin\OeWinFix2.exe is running (see swap.bat):
 rem    build.bat OeWinFix2.new.exe
-rem  Edit VCVARS below if your Visual Studio lives elsewhere.
+rem  Toolchain: VS2022 Community by default. Override with the OWF2_VCVARS
+rem  environment variable, otherwise ask vswhere for whatever VC toolset is
+rem  installed (VS2019/2022/2026 all work - the code is plain Win32 + static CRT).
 rem ===========================================================================
 setlocal
-set VCVARS=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat
+set "VCVARS=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat"
+if defined OWF2_VCVARS set "VCVARS=%OWF2_VCVARS%"
+set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+if not exist "%VCVARS%" if exist "%VSWHERE%" for /f "usebackq delims=" %%i in (`"%VSWHERE%" -latest -products * -property installationPath`) do set "VCVARS=%%i\VC\Auxiliary\Build\vcvarsall.bat"
 set MAIN=%~1
 if "%MAIN%"=="" set MAIN=OeWinFix2.exe
-if not exist "%VCVARS%" ( echo [build] vcvarsall.bat not found, edit VCVARS & exit /b 1 )
+if not exist "%VCVARS%" ( echo [build] vcvarsall.bat not found - set OWF2_VCVARS & exit /b 1 )
+echo [build] toolchain: %VCVARS%
 call "%VCVARS%" x86 >nul
 if errorlevel 1 ( echo [build] vcvarsall failed & exit /b 1 )
 
@@ -30,7 +36,7 @@ echo [build] %MAIN% ...
 cl /nologo /utf-8 /O2 /MT /W3 /EHsc /DUNICODE /D_UNICODE ^
    "%~dp0src\main.cpp" "%~dp0src\log.cpp" "%~dp0src\util.cpp" "%~dp0src\windowize.cpp" ^
    "%~dp0src\desktop.cpp" "%~dp0src\kbd.cpp" "%~dp0src\relay.cpp" "%~dp0src\bcast.cpp" ^
-   "%~dp0src\mirror.cpp" "%~dp0src\statusui.cpp" ^
+   "%~dp0src\statusui.cpp" ^
    /Fe:"%~dp0bin\%MAIN%" /Fo:"%~dp0bin\obj\\" ^
    /link /SUBSYSTEM:WINDOWS /MACHINE:X86 ^
    /MANIFEST:EMBED /MANIFESTINPUT:"%~dp0src\OeWinFix2.manifest" /MANIFESTUAC:NO

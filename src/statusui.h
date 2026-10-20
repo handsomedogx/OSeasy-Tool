@@ -1,11 +1,14 @@
 // ============================================================================
-//  statusui.h — 状态面板（简单 GUI：状态文本 + 四个按钮 + 两个开关）
+//  statusui.h — 状态面板（简单 GUI：状态文本 + 五个按钮 + 两个开关）
 // ============================================================================
 #pragma once
 #include <windows.h>
 
 // 由 main.cpp 实现：面板上的"退出程序"按钮走这里（走正常退出路径，不是 TerminateProcess）
 void AppRequestExit(void);
+// 由 main.cpp 实现：面板上的"紧急解封"按钮 = 热键 Ctrl+Alt+F10 的同一段实现
+// （窗口复位 + 键盘释放 + 夺回桌面 + 接管鼠标中继，一把梭）
+void AppPanicFix(void);
 // 由 main.cpp 实现：实际生效的热键说明（裸 F11/F12 抢不到会退回 Ctrl+Alt，面板要显示真实情况）
 const wchar_t* AppHotkeyDesc(void);
 

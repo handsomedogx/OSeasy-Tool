@@ -8,7 +8,7 @@
 BOOL HasBroadcastWindow(void);
 
 // 广播窗口是不是就在**我们自己的桌面**上（B 方案生效后就是这样）
-// —— 决定"镜像窗口"和"切到课堂桌面"这两个入口还有没有意义
+// —— 决定"切到课堂桌面"这个入口还有没有意义（在别的桌面上才有课切）
 BOOL BroadcastWindowOnOwnDesktop(void);
 
 // 现在立刻纠正一次（返回被处理的窗口数）

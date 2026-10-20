@@ -12,8 +12,8 @@
 #include "../src/relay.h"
 #include "../src/statusui.h"
 
-// ---- 项目里由 util/desktop/windowize/kbd/mirror/bcast 提供的东西，这里给桩 ----
-OPTIONS g_opt = { 1,1,1,0,0,1,1,1, 200,250,400,10, 0,0,0,0, 1, 0,0,0,0,0 };
+// ---- 项目里由 util/desktop/windowize/kbd/bcast 提供的东西，这里给桩 ----
+OPTIONS g_opt = { 1,1,0,0,1,1,1, 200,250,400, 0,0,0,0, 1, 0,0,0,0,0,0,1 };
 
 const wchar_t* OwnDesktopName(void)   { return L"Default"; }
 const wchar_t* InputDesktopName(void) { return L"Default"; }
@@ -24,22 +24,19 @@ void  DesktopHoldReclaim(DWORD)        { }
 int   ReclaimCount(void)              { return 0; }
 
 BOOL  HasBroadcastWindow(void)        { return TRUE; }
-BOOL  BroadcastWindowOnOwnDesktop(void) { return TRUE; }   // 模拟 B 方案生效：备用入口应隐藏
+BOOL  BroadcastWindowOnOwnDesktop(void) { return TRUE; }   // 模拟 B 方案生效："切课堂桌面"入口不出现
 int   WindowizeToggleMaximize(void)   { return 1; }        // 路线 C：面板"看大画面"按钮
 int   WindowizeNowManual(void)        { return 0; }
 int   WindowizeFixCount(void)         { return 12; }
 
 BOOL  KbdAvailable(void)              { return TRUE; }
 
-void  MirrorStart(void)               { }
-void  MirrorStop(void)                { }
-HWND  MirrorWindow(void)              { return NULL; }
-void  MirrorSetUserHidden(int)        { }
-
 int   BcastFixCount(void)             { return 3; }
 
 // statusui 的"退出程序"按钮：壳里就是关掉自己
 void  AppRequestExit(void)            { PostQuitMessage(0); }
+// statusui 的"紧急解封"按钮：壳里没有守护线程可解封，什么都不做
+void  AppPanicFix(void)               { }
 const wchar_t* AppHotkeyDesc(void)    { return L"F11 看大画面   F12 窗口复位   Ctrl+Alt+F10 紧急解封"; }
 
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int)

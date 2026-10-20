@@ -19,8 +19,8 @@ BOOL DesktopIsOurs(void)      { return TRUE; }
 BOOL HasBroadcastWindow(void) { return TRUE; }
 
 OPTIONS g_opt = {
-    1, 1, 1, 1, -1, 1, 1, 1,   // windowize/desktopReclaim/mirror/mouseRelay/mouseAccel(-1)/bcastFix/keyboard/tray
-    200, 250, 400, 10,         // 周期
+    1, 1, 1, -1, 1, 1, 1,      // windowize/desktopReclaim/mouseRelay/mouseAccel(-1)/bcastFix/keyboard/tray
+    200, 250, 400,             // 周期
     0, 0, 0, 0,                // 窗口几何
     1,                         // noResize
     0, 0, 1, 0, 0              // verbose/once/relayForce=1(不等探测)/showStatus/windowizeNow

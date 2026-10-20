@@ -1,7 +1,7 @@
 // ============================================================================
 //  OeWinFix2 — 只有两件事
 //    ① 全屏广播窗口 -> 窗口化
-//    ② 保证键盘鼠标正常使用（+ 镜像窗口，让你留在自己桌面也能看到老师画面）
+//    ② 保证键盘鼠标正常使用（键盘驱动解锁 + 直驱光标鼠标中继）
 //
 //  重写说明：所有机制都来自旧项目 OeWinFix 的**实测结论**，见 src/facts.h 与 docs/evidence.md。
 //  与旧版的区别：不再有内存补丁（主客户端被驱动保护，打不进去）、不再有学生端结束/挂起、
@@ -21,7 +21,6 @@
 #include "kbd.h"
 #include "relay.h"
 #include "bcast.h"
-#include "mirror.h"
 #include "statusui.h"
 
 #pragma comment(lib, "user32.lib")
@@ -31,16 +30,15 @@
 #pragma comment(lib, "shell32.lib")
 
 OPTIONS g_opt = {
-    1, 1, 1, 1, -1, 1, 1, 1,   // windowize/desktopReclaim/mirror/mouseRelay(默认开:探测驱动)
+    1, 1, 1, -1, 1, 1, 1,      // windowize/desktopReclaim/mouseRelay(默认开:探测驱动)
                                // /mouseAccel(-1 = 未指定, 启动时读 HKCU; 默认关=线性)/bcastFix/keyboard/tray
-    200, 250, 400, 10,         // windowInterval/desktopInterval/kbdInterval/mirrorFps
+    200, 250, 400,             // windowInterval/desktopInterval/kbdInterval
     0, 0, 0, 0,                // winW/winH/winX/winY  (0 = 工作区 80% 居中)
     1,                         // noResize: **默认 1 = 守护不主动改尺寸位置**（手动窗口化仍会改）
     0, 0, 0, 0, 0, 0, 1        // verbose/once/relayForce/showStatus/windowizeNow/quit/showPanel(默认弹面板)
 };
 
 #define WM_TRAY (WM_APP + 21)
-#define IDM_SHOW_MIRROR 3001
 #define IDM_WINDOWIZE   3002
 #define IDM_TOGGLE_DESK 3003
 #define IDM_RELAY_TOG   3004
@@ -50,8 +48,19 @@ OPTIONS g_opt = {
 #define IDM_FIXONCE     3008
 #define IDM_BCAST_FIX   3009
 #define IDM_RELAY_ACCEL 3010
+#define IDM_PANIC       3011
 #define HOTKEY_FIX      0xB001
 #define HOTKEY_PANIC    0xB002
+
+// 紧急解封：把"该做的四件事"立刻做一遍（热键 Ctrl+Alt+F10 和面板按钮共用这一处实现）
+void AppPanicFix(void)
+{
+    Log("panic: 窗口复位 + 键盘释放 + 夺回桌面 + 接管鼠标中继");
+    WindowizeNowManual();
+    KbdReleaseOnce();
+    if (!DesktopIsOurs()) ReclaimOwnDesktop();
+    if (g_opt.mouseRelay && !RelayIsOn()) g_opt.relayForce = 1;
+}
 
 static NOTIFYICONDATAW g_nid;
 static BOOL g_trayAdded = FALSE;
@@ -152,7 +161,7 @@ static void TrayMenu(HWND h)
 {
     POINT pt; GetCursorPos(&pt);
     HMENU m = CreatePopupMenu();
-    // B 方案生效时（广播窗口就在我们桌面上），"镜像/切桌面"没有意义 -> 置灰并说明
+    // B 方案生效时（广播窗口就在我们桌面上），"切到课堂桌面"没有意义 -> 换成"看大画面"
     BOOL fb = HasBroadcastWindow() && !BroadcastWindowOnOwnDesktop();
     AppendMenuW(m, MF_STRING, IDM_SHOW_STATUS, L"显示状态面板");
     AppendMenuW(m, MF_SEPARATOR, 0, NULL);
@@ -160,9 +169,7 @@ static void TrayMenu(HWND h)
     AppendMenuW(m, MF_STRING, IDM_TOGGLE_DESK,
                 fb ? L"切到课堂桌面 / 回自己桌面 (F11)"
                    : L"看大画面：广播窗口最大化 / 还原 (F11)");
-    AppendMenuW(m, MF_STRING | (fb ? 0 : MF_GRAYED), IDM_SHOW_MIRROR,
-                fb ? L"显示/隐藏镜像窗口"
-                   : L"镜像窗口 —— 广播窗口就在你桌面上，不需要镜像");
+    AppendMenuW(m, MF_STRING, IDM_PANIC, L"紧急解封（窗口复位 + 键盘释放 + 夺回桌面 + 接管鼠标）");
     AppendMenuW(m, MF_STRING | (g_opt.mouseRelay ? MF_CHECKED : 0), IDM_RELAY_TOG, L"鼠标中继（自动：探测到被吞才接管）");
     AppendMenuW(m, MF_STRING | (RelayGetAccel() ? MF_CHECKED : 0), IDM_RELAY_ACCEL, L"鼠标加速曲线（关 = 线性，灵敏度低但可预测）");
     AppendMenuW(m, MF_STRING | (g_opt.bcastFix ? MF_CHECKED : 0), IDM_BCAST_FIX, L"全屏广播改写为窗口广播");
@@ -191,12 +198,9 @@ static void TrayMenu(HWND h)
             MessageBoxW(NULL, L"当前没有广播窗口可放大。", L"OeWinFix2", MB_ICONINFORMATION | MB_OK);
         }
         break;
-    case IDM_SHOW_MIRROR: {
-        HWND w = MirrorWindow();
-        if (!w) { g_opt.mirror = 1; MirrorStart(); }
-        else MirrorSetUserHidden(IsWindowVisible(w) ? 1 : 0);
+    case IDM_PANIC:
+        AppPanicFix();
         break;
-    }
     case IDM_RELAY_TOG:
         g_opt.mouseRelay = g_opt.mouseRelay ? 0 : 1;
         Log("relay: 中继开关 -> %s（仍是按需接管：只有证明客户端在吞事件时才动手）",
@@ -253,11 +257,8 @@ static LRESULT CALLBACK HiddenProc(HWND h, UINT m, WPARAM w, LPARAM l)
             int n = WindowizeNowManual();
             Log("hotkey F12 -> 窗口复位 %d", n);
         } else if (w == HOTKEY_PANIC) {
-            Log("hotkey Ctrl+Alt+F10 -> 紧急解封（窗口化 + 键盘释放 + 夺回桌面 + 中继）");
-            WindowizeNowManual();
-            KbdReleaseOnce();
-            if (!DesktopIsOurs()) ReclaimOwnDesktop();
-            if (g_opt.mouseRelay && !RelayIsOn()) { g_opt.relayForce = 1; }
+            Log("hotkey Ctrl+Alt+F10 -> 紧急解封");
+            AppPanicFix();
         }
         return 0;
     case WM_CLOSE:
@@ -288,14 +289,13 @@ typedef struct { const wchar_t* name; int* target; } NUMOPT;
 static void Usage(void)
 {
     printf(
-"OeWinFix2 — 教学系统学生端：① 全屏广播窗口化  ② 键盘鼠标恢复正常（+ 镜像窗口）\n"
+"OeWinFix2 — 教学系统学生端：① 全屏广播窗口化  ② 键盘鼠标恢复正常\n"
 "\n"
 "用法: OeWinFix2.exe [选项]        （双击 = 托盘守护；本程序需要管理员权限）\n"
 "\n"
 "功能开关（默认全开）:\n"
 "  --no-windowize           不做窗口化\n"
 "  --no-desktop             不夺回自己的输入桌面\n"
-"  --no-mirror              不开镜像窗口\n"
 "  --relay                  打开鼠标中继（默认**就开着**：探测驱动 —— 只有证明客户端在吞事件\n"
 "                           时才接管，平时零钩子零注入。接管方式是直驱光标，不经过钩子链）\n"
 "  --no-relay               关掉中继（只用 bcast 改写 + 键盘 + 桌面，鼠标交给系统）\n"
@@ -310,7 +310,6 @@ static void Usage(void)
 "  --interval <ms>          窗口化纠正周期(默认 200)\n"
 "  --desktop-interval <ms>  桌面检测周期(默认 250)\n"
 "  --kbd-interval <ms>      键盘释放周期(默认 400)\n"
-"  --mirror-fps <n>         镜像帧率(默认 10)\n"
 "  --w <px> --h <px>        窗口化后的尺寸(默认工作区 80%%)\n"
 "  --x <px> --y <px>        窗口化后的位置(默认居中)\n"
 "  --resize                 允许守护自动改尺寸位置（默认不允许；手动窗口化不受影响）\n"
@@ -332,7 +331,6 @@ static BOOL ParseArgs(int argc, wchar_t** argv)
     FLAG flags[] = {
         { L"--no-windowize",  &g_opt.windowize,       0 },
         { L"--no-desktop",    &g_opt.desktopReclaim,  0 },
-        { L"--no-mirror",     &g_opt.mirror,          0 },
         { L"--no-relay",      &g_opt.mouseRelay,      0 },
         { L"--relay",         &g_opt.mouseRelay,      1 },
         { L"--no-accel",      &g_opt.mouseAccel,      0 },
@@ -356,7 +354,6 @@ static BOOL ParseArgs(int argc, wchar_t** argv)
         { L"--interval",         &g_opt.windowIntervalMs  },
         { L"--desktop-interval", &g_opt.desktopIntervalMs },
         { L"--kbd-interval",     &g_opt.kbdIntervalMs     },
-        { L"--mirror-fps",       &g_opt.mirrorFps         },
         { L"--w",                &g_opt.winW              },
         { L"--h",                &g_opt.winH              },
         { L"--x",                &g_opt.winX              },
@@ -465,14 +462,13 @@ static int RunApp(int argc, wchar_t** argv)
     if (g_opt.windowize)   StartWorker(WindowizeProc, NULL, "windowize");
     if (g_opt.desktopReclaim) StartWorker(DesktopProc, NULL, "desktop");
     if (g_opt.keyboard)    StartWorker(KeyboardProc, NULL, "keyboard");
-    if (g_opt.mirror)      MirrorStart();
     RelayStart();   // 始终启动: mouseRelay=0 时只做只读监视(报告客户端是否在吞事件)
     if (g_opt.bcastFix)    BcastStart();
 
     if (g_opt.once) {
         Sleep(2000);
         StopAllWorkers(3000);
-        RelayStop(); BcastStop(); MirrorStop();
+        RelayStop(); BcastStop();
         Log("--once 自检结束");
         LogClose(); return 0;
     }
@@ -528,7 +524,6 @@ static int RunApp(int argc, wchar_t** argv)
     StatusUiClose();
     RelayStop();
     BcastStop();
-    MirrorStop();
     StopAllWorkers(3000);
     TrayRemove();
     Log("OeWinFix2 exit");

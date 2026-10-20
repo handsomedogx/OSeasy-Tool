@@ -11,7 +11,7 @@
 //  用法:
 //    FakeBox.exe lock                      基本复刻（全屏窗口 + 真钩子）
 //    FakeBox.exe lock --desk NetTeachingDesktop   在指定桌面上建窗口（复刻教学桌面）
-//    FakeBox.exe lock --live               窗口自绘动图（验证镜像/抓帧链路）
+//    FakeBox.exe lock --live               窗口自绘动图（肉眼确认窗口化/中继时画面还在动）
 //    FakeBox.exe lock --inject 3000        每 3 秒自注入一次点击（0 = 关）
 //    FakeBox.exe lock --fight 1500         每 1.5 秒重新强占全屏（验证窗口化守护抗刷新）
 //  ESC 退出；P 打印窗口样式/钩子字节。
