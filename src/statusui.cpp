@@ -86,7 +86,7 @@ void StatusUiBuildText(wchar_t* s, int cch)
         L"【键盘】\r\n"
         L"  %ls\r\n"
         L"\r\n"
-        L"【热键】Ctrl+Alt+F9 立即窗口化   F8 看大画面(铺满/还原)   F10 紧急解封\r\n"
+        L"【热键】Ctrl+Alt+F9 窗口复位   F8 看大画面(铺满/还原)   F10 紧急解封\r\n"
         L"\r\n"
         L"日志: %ls",
         InputDesktopName(), OwnDesktopName(),
@@ -189,7 +189,7 @@ static LRESULT CALLBACK UiProc(HWND h, UINT m, WPARAM w, LPARAM l)
                                    WS_CHILD | WS_VISIBLE | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL,
                                    12, 12, 574, 300, h, (HMENU)IDC_STATUS, NULL, NULL);
         struct { int id; const wchar_t* text; int x, y, cx, cy; } btns[] = {
-            { IDC_FIXNOW,  L"立即窗口化",      12,  322, 106, 30 },
+            { IDC_FIXNOW,  L"窗口复位（F9）",  12,  322, 106, 30 },
             { IDC_MIRROR,  L"镜像窗口",        126, 322, 106, 30 },
             { IDC_DESK,    L"课堂 ↔ 自己桌面",  240, 322, 146, 30 },
             { IDC_OPENLOG, L"打开日志",        394, 322, 96,  30 },
@@ -240,7 +240,7 @@ static LRESULT CALLBACK UiProc(HWND h, UINT m, WPARAM w, LPARAM l)
         int id = LOWORD(w);
         if (id == IDC_FIXNOW) {
             int n = WindowizeNowManual();
-            Log("ui: 立即窗口化 -> %d 个窗口", n);
+            Log("ui: 窗口复位 -> 处理 %d 个窗口", n);
         } else if (id == IDC_MIRROR) {
             if (!NeedFallbackUi()) {
                 MessageBoxW(h,
@@ -325,14 +325,14 @@ void StatusUiShow(void)
     RegisterClassExW(&wc);
 
     RECT r = { 0, 0, 600, 402 };
-    AdjustWindowRectEx(&r, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, FALSE, WS_EX_TOOLWINDOW);
+    AdjustWindowRectEx(&r, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, FALSE, 0);
     int w = r.right - r.left, h = r.bottom - r.top;
     int x = (GetSystemMetrics(SM_CXSCREEN) - w) / 2;
     int y = (GetSystemMetrics(SM_CYSCREEN) - h) / 4;
     if (x < 0) x = 0;
     if (y < 0) y = 0;
 
-    g_wnd = CreateWindowExW(WS_EX_TOOLWINDOW, CLS_STATUSUI, L"OeWinFix2 状态",
+    g_wnd = CreateWindowExW(0, CLS_STATUSUI, L"OeWinFix2 状态",
                             WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
                             x, y, w, h, NULL, NULL, GetModuleHandleW(NULL), NULL);
     if (!g_wnd) { Log("ui: 状态面板创建失败 err=%lu", GetLastError()); return; }

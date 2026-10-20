@@ -152,7 +152,7 @@ static void TrayMenu(HWND h)
     BOOL fb = HasBroadcastWindow() && !BroadcastWindowOnOwnDesktop();
     AppendMenuW(m, MF_STRING, IDM_SHOW_STATUS, L"显示状态面板");
     AppendMenuW(m, MF_SEPARATOR, 0, NULL);
-    AppendMenuW(m, MF_STRING, IDM_FIXONCE, L"立即窗口化一次（摆成工作区 80% 居中）");
+    AppendMenuW(m, MF_STRING, IDM_FIXONCE, L"窗口复位：摆成工作区 80% 居中 (Ctrl+Alt+F9)");
     AppendMenuW(m, MF_STRING, IDM_TOGGLE_DESK,
                 fb ? L"切到课堂桌面 / 回自己桌面 (Ctrl+Alt+F8)"
                    : L"看大画面：广播窗口最大化 / 还原 (Ctrl+Alt+F8)");
@@ -174,7 +174,7 @@ static void TrayMenu(HWND h)
         int n = WindowizeNowManual();
         wchar_t b[128];
         _snwprintf_s(b, 128, _TRUNCATE, L"窗口化：处理了 %d 个窗口", n);
-        Log("tray: 立即窗口化 -> %d", n);
+        Log("tray: 窗口复位 -> %d", n);
         if (n == 0) MessageBoxW(NULL, L"当前没有发现广播窗口（MultiRenderWindowClass）。", L"OeWinFix2", MB_ICONINFORMATION | MB_OK);
         break;
     }
