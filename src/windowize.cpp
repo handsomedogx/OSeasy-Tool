@@ -333,7 +333,18 @@ int WindowizeToggleMaximize(void)
     else           { g_max.prevStyle = c->style; g_max.prevEx = c->ex; }
 
     if (goingMax) {
-        g_max.prev = c->rc;
+        // 抓"铺满前"的矩形，但先校验：客户端会周期性重设自己的几何，
+        // 实测抓到过 1440x1100（比 1080 的屏幕还高），照着还原就会还原到屏幕外。
+        RECT prev = c->rc;
+        int pw = (int)(prev.right - prev.left), ph = (int)(prev.bottom - prev.top);
+        int mw = (int)(mon.right - mon.left), mh = (int)(mon.bottom - mon.top);
+        if (pw < 320 || ph < 240 || pw > mw || ph > mh) {
+            int x, y, w, h;
+            TargetRect(&mon, &x, &y, &w, &h);
+            prev.left = x; prev.top = y; prev.right = x + w; prev.bottom = y + h;
+            Log("windowize: 铺满前的窗口尺寸不正常（%dx%d）-> 还原目标改用默认 %dx%d", pw, ph, w, h);
+        }
+        g_max.prev = prev;
         g_max.hwnd = c->hwnd;
         g_max.active = TRUE;
         style &= ~WS_POPUP;
@@ -341,18 +352,29 @@ int WindowizeToggleMaximize(void)
         style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
         SetWindowLongW(c->hwnd, GWL_STYLE, style);
         SetWindowLongW(c->hwnd, GWL_EXSTYLE, ex);
-        // SWP_NOSENDCHANGING：不加的话客户端会在 WM_WINDOWPOSCHANGING 里把尺寸顶回去（实测）
-        SetWindowPos(c->hwnd, HWND_TOP, mon.left, mon.top, mon.right - mon.left, mon.bottom - mon.top,
+        // 要"提到最前，但不要持久置顶"：先 HWND_TOPMOST 再立刻 HWND_NOTOPMOST。
+        // 单纯 HWND_TOP 在高 DPI / 客户端周期性重设几何时不一定生效（实测 z 序会被顶下去）。
+        // 这一下来完，窗口在最前，但 ex 里没有 WS_EX_TOPMOST —— 之后你切到别的程序它照样会被盖住。
+        SetWindowPos(c->hwnd, HWND_TOPMOST, mon.left, mon.top, mon.right - mon.left, mon.bottom - mon.top,
                      SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOACTIVATE |
                      SWP_NOOWNERZORDER | SWP_NOSENDCHANGING_BIT);
-        Log("windowize: 看大画面 -> 铺满工作区 (%d,%d) %dx%d（再按一次还原）",
+        SetWindowPos(c->hwnd, HWND_NOTOPMOST, 0, 0, 0, 0,
+                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+        BringWindowToTop(c->hwnd);
+        SetForegroundWindow(c->hwnd);      // 允许失败：渲染窗口可能不接受激活
+        Log("windowize: 看大画面 -> 铺满工作区 (%d,%d) %dx%d（已在最前，未置顶；再按一次还原）",
             (int)mon.left, (int)mon.top, (int)(mon.right - mon.left), (int)(mon.bottom - mon.top));
     } else {
         RECT back = g_max.prev;
-        if (back.right - back.left < 320 || back.bottom - back.top < 240) {
+        int bw = (int)(back.right - back.left), bh = (int)(back.bottom - back.top);
+        int mw = (int)(mon.right - mon.left), mh = (int)(mon.bottom - mon.top);
+        // 兜底：还原矩形必须落在工作区内且尺寸合理（见上面那次实测踩坑）
+        BOOL sane = (bw >= 320 && bh >= 240 && bw <= mw && bh <= mh);
+        if (!sane) {
             int x, y, w, h;
             TargetRect(&mon, &x, &y, &w, &h);
             back.left = x; back.top = y; back.right = x + w; back.bottom = y + h;
+            Log("windowize: 记住的矩形不可用（%dx%d）-> 还原成默认 %dx%d", bw, bh, w, h);
         }
         g_max.active = FALSE;
         SetWindowLongW(c->hwnd, GWL_STYLE, style);
