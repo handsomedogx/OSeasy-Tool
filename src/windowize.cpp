@@ -216,7 +216,12 @@ static BOOL FixOne(const CAND* c)
             double visArea = has ? (double)(inter.right - inter.left) * (inter.bottom - inter.top) : 0.0;
             mostlyOut = (winArea <= 0) || ((visArea / winArea) < 0.5);
         }
-        if (fullscreen) {
+        if (g_manual) {
+            // 手动"立即窗口化"：**一定摆到位**（默认工作区 80% 居中）。
+            // 以前这里也走"只在全屏/越界时才动"的克制逻辑 —— 结果 B 方案把窗口改好之后，
+            // 用户点这个按钮**没有任何可见变化**，看起来就是"这个功能没用"。
+            needGeo = TRUE;
+        } else if (fullscreen) {
             // 全屏 -> 窗口化。位置**优先回到"用户上次摆好的位置"**（不再一律居中）,
             // 只有还没记住任何位置时才用默认的"工作区 80% 居中"。
             RECT good;
@@ -306,6 +311,63 @@ int WindowizeNow(void)
     return fixed;
 }
 
+// ---------------------------------------------------------------- 看大画面（最大化/还原）
+// 用户要的"想学时看一眼全屏"：不切桌面（B 方案下教学桌面是空的），
+// 直接把广播窗口在**工作区内**铺满；再按一次回到原来的位置尺寸。
+static struct { HWND hwnd; RECT prev; BOOL active; LONG_PTR prevStyle, prevEx; } g_max;
+
+int WindowizeToggleMaximize(void)
+{
+    CAND list[MAX_CAND];
+    int n = Collect(list, MAX_CAND);
+    if (n <= 0) return 0;
+
+    const CAND* c = &list[0];
+    RECT mon = c->mon;                              // rcWork：不盖住任务栏
+
+    BOOL goingMax = !(g_max.active && g_max.hwnd == c->hwnd);
+
+    // 样式先摆正，免得又是个 hwnd 带 POPUP/TOPMOST 的怪窗口
+    LONG_PTR style = c->style, ex = c->ex;
+    if (!goingMax) { style = g_max.prevStyle; ex = g_max.prevEx; }
+    else           { g_max.prevStyle = c->style; g_max.prevEx = c->ex; }
+
+    if (goingMax) {
+        g_max.prev = c->rc;
+        g_max.hwnd = c->hwnd;
+        g_max.active = TRUE;
+        style &= ~WS_POPUP;
+        ex    &= ~WS_EX_TOPMOST;
+        style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+        SetWindowLongW(c->hwnd, GWL_STYLE, style);
+        SetWindowLongW(c->hwnd, GWL_EXSTYLE, ex);
+        // SWP_NOSENDCHANGING：不加的话客户端会在 WM_WINDOWPOSCHANGING 里把尺寸顶回去（实测）
+        SetWindowPos(c->hwnd, HWND_TOP, mon.left, mon.top, mon.right - mon.left, mon.bottom - mon.top,
+                     SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOACTIVATE |
+                     SWP_NOOWNERZORDER | SWP_NOSENDCHANGING_BIT);
+        Log("windowize: 看大画面 -> 铺满工作区 (%d,%d) %dx%d（再按一次还原）",
+            (int)mon.left, (int)mon.top, (int)(mon.right - mon.left), (int)(mon.bottom - mon.top));
+    } else {
+        RECT back = g_max.prev;
+        if (back.right - back.left < 320 || back.bottom - back.top < 240) {
+            int x, y, w, h;
+            TargetRect(&mon, &x, &y, &w, &h);
+            back.left = x; back.top = y; back.right = x + w; back.bottom = y + h;
+        }
+        g_max.active = FALSE;
+        SetWindowLongW(c->hwnd, GWL_STYLE, style);
+        SetWindowLongW(c->hwnd, GWL_EXSTYLE, ex);
+        SetWindowPos(c->hwnd, HWND_NOTOPMOST, back.left, back.top,
+                     back.right - back.left, back.bottom - back.top,
+                     SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOACTIVATE |
+                     SWP_NOOWNERZORDER | SWP_NOSENDCHANGING_BIT);
+        Log("windowize: 看大画面 -> 还原到 (%d,%d) %dx%d",
+            (int)back.left, (int)back.top, (int)(back.right - back.left), (int)(back.bottom - back.top));
+    }
+    g_fixCount++;
+    return 1;
+}
+
 int WindowizeFixCount(void) { return g_fixCount; }
 
 // 跨桌面：广播窗口在"教学桌面"上时，需要把纠正线程挂到那个桌面去做
@@ -378,6 +440,13 @@ static BOOL CALLBACK FindBcast(HWND h, LPARAM lp)
     GetClassNameW(h, cls, 128);
     if (_wcsicmp(cls, BCAST_WINDOW_CLASS) == 0) { *(BOOL*)lp = TRUE; return FALSE; }
     return TRUE;
+}
+
+BOOL BroadcastWindowOnOwnDesktop(void)
+{
+    BOOL found = FALSE;
+    EnumDesktopWindows(NULL, FindBcast, (LPARAM)&found);   // 只查当前线程所在桌面
+    return found;
 }
 
 BOOL HasBroadcastWindow(void)

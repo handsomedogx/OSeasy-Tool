@@ -20,9 +20,12 @@ const wchar_t* InputDesktopName(void) { return L"Default"; }
 BOOL  DesktopIsOurs(void)             { return TRUE; }
 BOOL  SwitchToClassDesktop(void)      { return FALSE; }
 BOOL  ReclaimOwnDesktop(void)         { return FALSE; }
+void  DesktopHoldReclaim(DWORD)        { }
 int   ReclaimCount(void)              { return 0; }
 
 BOOL  HasBroadcastWindow(void)        { return TRUE; }
+BOOL  BroadcastWindowOnOwnDesktop(void) { return TRUE; }   // 模拟 B 方案生效：备用入口应隐藏
+int   WindowizeToggleMaximize(void)   { return 1; }        // 路线 C：面板"看大画面"按钮
 int   WindowizeNowManual(void)        { return 0; }
 int   WindowizeFixCount(void)         { return 12; }
 

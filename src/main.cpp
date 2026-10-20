@@ -148,11 +148,17 @@ static void TrayMenu(HWND h)
 {
     POINT pt; GetCursorPos(&pt);
     HMENU m = CreatePopupMenu();
+    // B 方案生效时（广播窗口就在我们桌面上），"镜像/切桌面"没有意义 -> 置灰并说明
+    BOOL fb = HasBroadcastWindow() && !BroadcastWindowOnOwnDesktop();
     AppendMenuW(m, MF_STRING, IDM_SHOW_STATUS, L"显示状态面板");
     AppendMenuW(m, MF_SEPARATOR, 0, NULL);
-    AppendMenuW(m, MF_STRING, IDM_FIXONCE, L"立即窗口化一次");
-    AppendMenuW(m, MF_STRING, IDM_TOGGLE_DESK, L"切到课堂桌面 / 回自己桌面 (Ctrl+Alt+F8)");
-    AppendMenuW(m, MF_STRING, IDM_SHOW_MIRROR, L"显示/隐藏镜像窗口");
+    AppendMenuW(m, MF_STRING, IDM_FIXONCE, L"立即窗口化一次（摆成工作区 80% 居中）");
+    AppendMenuW(m, MF_STRING, IDM_TOGGLE_DESK,
+                fb ? L"切到课堂桌面 / 回自己桌面 (Ctrl+Alt+F8)"
+                   : L"看大画面：广播窗口最大化 / 还原 (Ctrl+Alt+F8)");
+    AppendMenuW(m, MF_STRING | (fb ? 0 : MF_GRAYED), IDM_SHOW_MIRROR,
+                fb ? L"显示/隐藏镜像窗口"
+                   : L"镜像窗口 —— 广播窗口就在你桌面上，不需要镜像");
     AppendMenuW(m, MF_STRING | (g_opt.mouseRelay ? MF_CHECKED : 0), IDM_RELAY_TOG, L"鼠标中继（自动：探测到被吞才接管）");
     AppendMenuW(m, MF_STRING | (RelayGetAccel() ? MF_CHECKED : 0), IDM_RELAY_ACCEL, L"鼠标加速曲线（关 = 线性，灵敏度低但可预测）");
     AppendMenuW(m, MF_STRING | (g_opt.bcastFix ? MF_CHECKED : 0), IDM_BCAST_FIX, L"全屏广播改写为窗口广播");
@@ -173,7 +179,13 @@ static void TrayMenu(HWND h)
         break;
     }
     case IDM_TOGGLE_DESK:
-        if (DesktopIsOurs()) SwitchToClassDesktop(); else ReclaimOwnDesktop();
+        // B 方案没生效 -> 还有"课堂桌面"可切；生效了 -> 这个位置就是"看大画面"
+        if (HasBroadcastWindow() && !BroadcastWindowOnOwnDesktop()) {
+            if (DesktopIsOurs()) { if (SwitchToClassDesktop()) DesktopHoldReclaim(60000); }
+            else ReclaimOwnDesktop();
+        } else if (WindowizeToggleMaximize() == 0) {
+            MessageBoxW(NULL, L"当前没有广播窗口可放大。", L"OeWinFix2", MB_ICONINFORMATION | MB_OK);
+        }
         break;
     case IDM_SHOW_MIRROR: {
         HWND w = MirrorWindow();
@@ -476,8 +488,8 @@ static int RunApp(int argc, wchar_t** argv)
     if (g_opt.tray && g_hidden) TrayAdd(g_hidden);
     BOOL hk1 = RegisterHotKey(g_hidden, HOTKEY_FIX,   MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_F9);
     BOOL hk2 = RegisterHotKey(g_hidden, HOTKEY_PANIC, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_F10);
-    RegisterHotKey(g_hidden, 0xB008, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_F8);
-    Log("hotkeys: F9(立刻窗口化)=%d F10(紧急解封)=%d F8(课堂/自己桌面)=1", hk1, hk2);
+    BOOL hk8 = RegisterHotKey(g_hidden, 0xB008, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_F8);
+    Log("hotkeys: F9(立刻窗口化)=%d F10(紧急解封)=%d F8(看大画面:铺满/还原)=%d", hk1, hk2, hk8);
     Log("已进入守护状态（双击托盘图标看状态面板；面板里或右键菜单可退出）");
 
     // 默认把面板摆出来：只靠托盘图标的话，图标一进"隐藏的图标"就等于没有 UI
@@ -486,7 +498,13 @@ static int RunApp(int argc, wchar_t** argv)
     MSG msg;
     while (GetMessageW(&msg, NULL, 0, 0) > 0) {
         if (msg.message == WM_HOTKEY && msg.wParam == 0xB008) {
-            if (DesktopIsOurs()) SwitchToClassDesktop(); else ReclaimOwnDesktop();
+            // F8：B 方案生效 = "看大画面"（广播窗口铺满/还原）；没生效 = 课堂桌面来回切
+            if (HasBroadcastWindow() && !BroadcastWindowOnOwnDesktop()) {
+                if (DesktopIsOurs()) { if (SwitchToClassDesktop()) DesktopHoldReclaim(60000); }
+                else ReclaimOwnDesktop();
+            } else if (WindowizeToggleMaximize() == 0) {
+                Log("hotkey F8: 当前没有广播窗口可放大");
+            }
             continue;
         }
         TranslateMessage(&msg);

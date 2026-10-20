@@ -56,6 +56,22 @@ BOOL SwitchToClassDesktop(void)
 
 int ReclaimCount(void) { return (int)InterlockedCompareExchange(&g_reclaims, 0, 0); }
 
+// 用户手动"切到课堂桌面"时，暂时不要把他拉回来
+// （否则点一下 250ms 就被夺回，观感就是"这个按钮没用"）
+static volatile LONG g_holdUntil = 0;
+
+void DesktopHoldReclaim(DWORD ms)
+{
+    InterlockedExchange(&g_holdUntil, (LONG)(GetTickCount() + ms));
+    Log("desktop: 暂停夺回 %lu 秒（用户手动切了桌面）", ms / 1000);
+}
+
+static BOOL HoldActive(void)
+{
+    LONG d = (LONG)(GetTickCount() - (DWORD)g_holdUntil);
+    return d < 0;   // 还没到期
+}
+
 DWORD WINAPI DesktopProc(LPVOID)
 {
     Log("desktop: guard on (own='%ls', 周期 %dms)", OwnDesktopName(), g_opt.desktopIntervalMs);
@@ -67,7 +83,7 @@ DWORD WINAPI DesktopProc(LPVOID)
                 Log("desktop: 输入桌面被切到 '%ls' (自己 '%ls') -> 夺回", InputDesktopName(), OwnDesktopName());
                 wasForeign = TRUE;
             }
-            if (g_opt.desktopReclaim) ReclaimOwnDesktop();
+            if (g_opt.desktopReclaim && !HoldActive()) ReclaimOwnDesktop();
         } else {
             wasForeign = FALSE;
         }

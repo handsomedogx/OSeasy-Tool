@@ -45,10 +45,19 @@
 #define CLS_STATUSUI L"OeWinFix2StatusUi"
 
 static HWND g_wnd = NULL, g_status = NULL, g_relayChk = NULL, g_accelChk = NULL, g_sensEdit = NULL;
+static HWND g_btnMirror = NULL, g_btnDesk = NULL, g_btnFix = NULL, g_btnLog = NULL, g_btnQuit = NULL;
 static HFONT g_uiFont = NULL, g_monoFont = NULL;
 static wchar_t g_lastText[8192] = L"";
 
 // ---------------------------------------------------------------- 文本
+// B 方案生效时（广播窗口就在我们自己的桌面上），"镜像窗口 / 切到课堂桌面"这两个入口没有意义：
+// 镜像会重复显示同一幅画面，课堂桌面上根本没有内容。所以按真实状态把它们藏起来并说明原因，
+// 而不是留着让人点了以为坏了。
+static BOOL NeedFallbackUi(void)
+{
+    return HasBroadcastWindow() && !BroadcastWindowOnOwnDesktop();
+}
+
 // 面板、--status、单实例回退弹框都用这一份文本，避免两处文案各写各的（之前就漂移过）
 void StatusUiBuildText(wchar_t* s, int cch)
 {
@@ -64,6 +73,7 @@ void StatusUiBuildText(wchar_t* s, int cch)
         L"【广播】\r\n"
         L"  广播窗口   %ls          改写为窗口广播   %d 次\r\n"
         L"  镜像窗口   %ls\r\n"
+        L"  备用入口   %ls\r\n"
         L"  窗口化修正 %d 次        夺回桌面   %d 次\r\n"
         L"\r\n"
         L"【鼠标】\r\n"
@@ -76,13 +86,15 @@ void StatusUiBuildText(wchar_t* s, int cch)
         L"【键盘】\r\n"
         L"  %ls\r\n"
         L"\r\n"
-        L"【热键】Ctrl+Alt+F9 立即窗口化   F10 紧急解封   F8 课堂/自己桌面\r\n"
+        L"【热键】Ctrl+Alt+F9 立即窗口化   F8 看大画面(铺满/还原)   F10 紧急解封\r\n"
         L"\r\n"
         L"日志: %ls",
         InputDesktopName(), OwnDesktopName(),
         DesktopIsOurs() ? L"" : L"   (正在夺回)",
         HasBroadcastWindow() ? L"有" : L"无", BcastFixCount(),
         MirrorWindow() ? (IsWindowVisible(MirrorWindow()) ? L"显示中" : L"已就绪(未显示)") : L"关闭",
+        NeedFallbackUi() ? L"镜像/切桌面 可用（广播在别的桌面上）"
+                         : L"镜像已隐藏；F8 = 看大画面（广播窗口铺满/还原）",
         WindowizeFixCount(), ReclaimCount(),
         RelaySwallowDetected() ? L"是（在吞）" : L"否",
         g_opt.mouseRelay ? (on ? L"接管中（直驱光标）"
@@ -109,6 +121,30 @@ static void Refresh(void)
     }
     if (g_relayChk) SendMessageW(g_relayChk, BM_SETCHECK, g_opt.mouseRelay ? BST_CHECKED : BST_UNCHECKED, 0);
     if (g_accelChk) SendMessageW(g_accelChk, BM_SETCHECK, RelayGetAccel() ? BST_CHECKED : BST_UNCHECKED, 0);
+
+    // 备用入口跟着真实状态出现/隐藏（点了一个注定没反应的按钮，比没有这个按钮更糟），
+    // 隐藏时把右组按钮左移补齐，避免中间空一大块。
+    // "课堂 ↔ 自己桌面"那个位置改成"看大画面（F8）"——它是路线 C 的主角，永远可用。
+    BOOL fb = NeedFallbackUi();
+    if (g_btnMirror) ShowWindow(g_btnMirror, fb ? SW_SHOW : SW_HIDE);
+    if (g_btnDesk) {
+        SetWindowTextW(g_btnDesk, fb ? L"切到课堂桌面" : L"看大画面（F8）");
+        ShowWindow(g_btnDesk, SW_SHOW);
+    }
+
+    const int y = 322, h = 30;
+    UINT flags = SWP_NOZORDER | SWP_NOACTIVATE;
+    if (fb) {
+        if (g_btnFix)  SetWindowPos(g_btnFix,  NULL, 12,  y, 106, h, flags);
+        if (g_btnDesk) SetWindowPos(g_btnDesk, NULL, 240, y, 146, h, flags);
+        if (g_btnLog)  SetWindowPos(g_btnLog,  NULL, 394, y, 96,  h, flags);
+        if (g_btnQuit) SetWindowPos(g_btnQuit, NULL, 498, y, 86,  h, flags);
+    } else {
+        if (g_btnFix)  SetWindowPos(g_btnFix,  NULL, 12,  y, 120, h, flags);
+        if (g_btnDesk) SetWindowPos(g_btnDesk, NULL, 140, y, 120, h, flags);
+        if (g_btnLog)  SetWindowPos(g_btnLog,  NULL, 268, y, 120, h, flags);
+        if (g_btnQuit) SetWindowPos(g_btnQuit, NULL, 396, y, 100, h, flags);
+    }
 }
 
 // ---------------------------------------------------------------- 动作
@@ -159,10 +195,16 @@ static LRESULT CALLBACK UiProc(HWND h, UINT m, WPARAM w, LPARAM l)
             { IDC_OPENLOG, L"打开日志",        394, 322, 96,  30 },
             { IDC_QUIT,    L"退出程序",        498, 322, 86,  30 },
         };
-        for (int i = 0; i < 5; i++)
-            CreateWindowExW(0, L"BUTTON", btns[i].text, WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                            btns[i].x, btns[i].y, btns[i].cx, btns[i].cy, h,
-                            (HMENU)(LONG_PTR)btns[i].id, NULL, NULL);
+        for (int i = 0; i < 5; i++) {
+            HWND b = CreateWindowExW(0, L"BUTTON", btns[i].text, WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                                     btns[i].x, btns[i].y, btns[i].cx, btns[i].cy, h,
+                                     (HMENU)(LONG_PTR)btns[i].id, NULL, NULL);
+            if (btns[i].id == IDC_MIRROR) g_btnMirror = b;
+            if (btns[i].id == IDC_DESK)   g_btnDesk = b;
+            if (btns[i].id == IDC_FIXNOW) g_btnFix = b;
+            if (btns[i].id == IDC_OPENLOG) g_btnLog = b;
+            if (btns[i].id == IDC_QUIT)   g_btnQuit = b;
+        }
 
         g_relayChk = CreateWindowExW(0, L"BUTTON", L"鼠标中继（自动）",
                                      WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
@@ -200,11 +242,31 @@ static LRESULT CALLBACK UiProc(HWND h, UINT m, WPARAM w, LPARAM l)
             int n = WindowizeNowManual();
             Log("ui: 立即窗口化 -> %d 个窗口", n);
         } else if (id == IDC_MIRROR) {
-            HWND m = MirrorWindow();
-            if (!m) { g_opt.mirror = 1; MirrorStart(); }
-            else MirrorSetUserHidden(IsWindowVisible(m) ? 1 : 0);
+            if (!NeedFallbackUi()) {
+                MessageBoxW(h,
+                    L"当前用不到镜像窗口：广播窗口已经被改写成窗口，就在你自己的桌面上，\n"
+                    L"再显示一份就是同一幅画面出现两次。\n\n"
+                    L"（镜像只在「广播窗口位于教学桌面」时才需要 —— 那种情况说明 B 方案没生效。）",
+                    L"OeWinFix2", MB_ICONINFORMATION | MB_OK);
+            } else {
+                HWND m = MirrorWindow();
+                if (!m) { g_opt.mirror = 1; MirrorStart(); }
+                else MirrorSetUserHidden(IsWindowVisible(m) ? 1 : 0);
+            }
         } else if (id == IDC_DESK) {
-            if (DesktopIsOurs()) SwitchToClassDesktop(); else ReclaimOwnDesktop();
+            if (NeedFallbackUi()) {
+                // B 方案没生效才有"课堂桌面"可切
+                if (DesktopIsOurs()) {
+                    if (SwitchToClassDesktop()) DesktopHoldReclaim(60000);   // 别 250ms 就把人拉回来
+                } else {
+                    ReclaimOwnDesktop();
+                }
+            } else {
+                // 路线 C：看大画面 —— 广播窗口在工作区内铺满/还原，不切桌面
+                if (WindowizeToggleMaximize() == 0)
+                    MessageBoxW(h, L"当前没有广播窗口可放大。", L"OeWinFix2",
+                                MB_ICONINFORMATION | MB_OK);
+            }
         } else if (id == IDC_OPENLOG) {
             OpenLogDir();
         } else if (id == IDC_RELAY) {
