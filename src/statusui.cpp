@@ -86,7 +86,7 @@ void StatusUiBuildText(wchar_t* s, int cch)
         L"【键盘】\r\n"
         L"  %ls\r\n"
         L"\r\n"
-        L"【热键】Ctrl+Alt+F9 窗口复位   F8 看大画面(铺满/还原)   F10 紧急解封\r\n"
+        L"【热键】%ls\r\n"
         L"\r\n"
         L"日志: %ls",
         InputDesktopName(), OwnDesktopName(),
@@ -107,6 +107,7 @@ void StatusUiBuildText(wchar_t* s, int cch)
         g_opt.keyboard ? (KbdAvailable() ? L"KbdFilter 释放中（每 400ms 下发一次）"
                                          : L"本机没有 KbdFilter 设备（本来也不锁）")
                        : L"已关闭",
+        AppHotkeyDesc(),
         LogFilePath());
 }
 
@@ -135,13 +136,16 @@ static void Refresh(void)
     const int y = 322, h = 30;
     UINT flags = SWP_NOZORDER | SWP_NOACTIVATE;
     if (fb) {
-        if (g_btnFix)  SetWindowPos(g_btnFix,  NULL, 12,  y, 106, h, flags);
-        if (g_btnDesk) SetWindowPos(g_btnDesk, NULL, 240, y, 146, h, flags);
-        if (g_btnLog)  SetWindowPos(g_btnLog,  NULL, 394, y, 96,  h, flags);
-        if (g_btnQuit) SetWindowPos(g_btnQuit, NULL, 498, y, 86,  h, flags);
+        // B 失效：多出"镜像"这一位 —— 切课堂桌面 / 镜像 / 窗口复位 / 日志 / 退出
+        if (g_btnDesk)   SetWindowPos(g_btnDesk,   NULL, 12,  y, 146, h, flags);
+        if (g_btnMirror) SetWindowPos(g_btnMirror, NULL, 166, y, 106, h, flags);
+        if (g_btnFix)    SetWindowPos(g_btnFix,    NULL, 280, y, 106, h, flags);
+        if (g_btnLog)    SetWindowPos(g_btnLog,    NULL, 394, y, 96,  h, flags);
+        if (g_btnQuit)   SetWindowPos(g_btnQuit,   NULL, 498, y, 86,  h, flags);
     } else {
-        if (g_btnFix)  SetWindowPos(g_btnFix,  NULL, 12,  y, 120, h, flags);
-        if (g_btnDesk) SetWindowPos(g_btnDesk, NULL, 140, y, 120, h, flags);
+        // 正常情况四位：看大画面 / 窗口复位 / 日志 / 退出
+        if (g_btnDesk) SetWindowPos(g_btnDesk, NULL, 12,  y, 120, h, flags);
+        if (g_btnFix)  SetWindowPos(g_btnFix,  NULL, 140, y, 120, h, flags);
         if (g_btnLog)  SetWindowPos(g_btnLog,  NULL, 268, y, 120, h, flags);
         if (g_btnQuit) SetWindowPos(g_btnQuit, NULL, 396, y, 100, h, flags);
     }
@@ -189,9 +193,9 @@ static LRESULT CALLBACK UiProc(HWND h, UINT m, WPARAM w, LPARAM l)
                                    WS_CHILD | WS_VISIBLE | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL,
                                    12, 12, 574, 300, h, (HMENU)IDC_STATUS, NULL, NULL);
         struct { int id; const wchar_t* text; int x, y, cx, cy; } btns[] = {
-            { IDC_FIXNOW,  L"窗口复位（F9）",  12,  322, 106, 30 },
-            { IDC_MIRROR,  L"镜像窗口",        126, 322, 106, 30 },
-            { IDC_DESK,    L"课堂 ↔ 自己桌面",  240, 322, 146, 30 },
+            { IDC_DESK,    L"看大画面（F8）",  12,  322, 120, 30 },   // 第一位：看画面
+            { IDC_FIXNOW,  L"窗口复位（F9）",  140, 322, 120, 30 },   // 第二位：复位
+            { IDC_MIRROR,  L"镜像窗口",        268, 322, 106, 30 },
             { IDC_OPENLOG, L"打开日志",        394, 322, 96,  30 },
             { IDC_QUIT,    L"退出程序",        498, 322, 86,  30 },
         };

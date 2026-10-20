@@ -106,6 +106,10 @@ void AppRequestExit(void)
     if (g_hidden) PostMessageW(g_hidden, WM_CLOSE, 0, 0);
 }
 
+// 实际生效的热键说明（裸 F8/F9 抢不到时会自动退回 Ctrl+Alt，面板要显示真实情况）
+static wchar_t g_hkDesc[160] = L"F9 窗口复位   F8 看大画面   Ctrl+Alt+F10 紧急解封";
+const wchar_t* AppHotkeyDesc(void) { return g_hkDesc; }
+
 // ---------------------------------------------------------------- 状态文本
 // 状态文字只有一份，在 statusui.cpp（面板和 --status/弹框共用），这里不再重复拼一遍
 static void ShowStatusBox(void)
@@ -486,10 +490,19 @@ static int RunApp(int argc, wchar_t** argv)
                                0, 0, 0, 0, NULL, NULL, wc.hInstance, NULL);
     // 故意不 ShowWindow：它只是个消息宿主
     if (g_opt.tray && g_hidden) TrayAdd(g_hidden);
-    BOOL hk1 = RegisterHotKey(g_hidden, HOTKEY_FIX,   MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_F9);
+    // 裸 F8 / F9（用户要求：不想再按 Ctrl+Alt）。
+    // 注意这是**全局抢占**：注册成功后在任何程序里按 F8/F9 都会触发我们 ——
+    // Excel 的 F9 重算、VS 的 F9 断点都会被抢走。抢不到（已被别的程序注册）就自动退回
+    // Ctrl+Alt 组合，日志里写清楚实际生效的是哪个。F10 是紧急键，仍保留 Ctrl+Alt 避免误触。
+    BOOL bare9 = RegisterHotKey(g_hidden, HOTKEY_FIX, MOD_NOREPEAT, VK_F9);
+    BOOL hk9   = bare9 || RegisterHotKey(g_hidden, HOTKEY_FIX, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_F9);
+    BOOL bare8 = RegisterHotKey(g_hidden, 0xB008, MOD_NOREPEAT, VK_F8);
+    BOOL hk8   = bare8 || RegisterHotKey(g_hidden, 0xB008, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_F8);
     BOOL hk2 = RegisterHotKey(g_hidden, HOTKEY_PANIC, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_F10);
-    BOOL hk8 = RegisterHotKey(g_hidden, 0xB008, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_F8);
-    Log("hotkeys: F9(立刻窗口化)=%d F10(紧急解封)=%d F8(看大画面:铺满/还原)=%d", hk1, hk2, hk8);
+    Log("hotkeys: F9(windowize-reset)=%d [%s]   F8(zoom-toggle)=%d [%s]   Ctrl+Alt+F10(panic)=%d",
+        hk9, bare9 ? "bare F9" : "Ctrl+Alt+F9", hk8, bare8 ? "bare F8" : "Ctrl+Alt+F8", hk2);
+    _snwprintf_s(g_hkDesc, 160, _TRUNCATE, L"%ls 窗口复位   %ls 看大画面   Ctrl+Alt+F10 紧急解封",
+                 bare9 ? L"F9" : L"Ctrl+Alt+F9", bare8 ? L"F8" : L"Ctrl+Alt+F8");
     Log("已进入守护状态（双击托盘图标看状态面板；面板里或右键菜单可退出）");
 
     // 默认把面板摆出来：只靠托盘图标的话，图标一进"隐藏的图标"就等于没有 UI
