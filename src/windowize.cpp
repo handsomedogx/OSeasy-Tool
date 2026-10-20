@@ -36,7 +36,7 @@ typedef struct {
 static struct { HWND hwnd; DWORD until; } g_quiet[QUIET_SLOTS];
 static int g_quietNext = 0;
 static int g_fixCount = 0;
-static BOOL g_manual = FALSE;   // 手动窗口化(托盘/F9/--windowize-now) -> 允许改尺寸位置
+static BOOL g_manual = FALSE;   // 手动窗口化(托盘/F12/--windowize-now) -> 允许改尺寸位置
 
 // ---------------------------------------------------------------- 桌面/矩形
 static void MonitorOf(HWND hwnd, RECT* mon)
@@ -205,7 +205,7 @@ static BOOL FixOne(const CAND* c)
     BOOL needGeo = FALSE;
     BOOL restoreGood = FALSE;
     // 守护默认**不碰位置尺寸**（noResize=1）：全屏广播已由 bcast 模块从源头改成窗口广播；
-    // 只有手动窗口化(托盘/F9)才允许改几何。
+    // 只有手动窗口化(托盘/F12)才允许改几何。
     if ((!g_opt.noResize || g_manual) && !c->iconic) {
         BOOL fullscreen = (c->ratio >= 0.90);
         BOOL mostlyOut  = TRUE;

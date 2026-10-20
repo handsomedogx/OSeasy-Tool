@@ -40,7 +40,7 @@ int   BcastFixCount(void)             { return 3; }
 
 // statusui 的"退出程序"按钮：壳里就是关掉自己
 void  AppRequestExit(void)            { PostQuitMessage(0); }
-const wchar_t* AppHotkeyDesc(void)    { return L"F9 窗口复位   F8 看大画面   Ctrl+Alt+F10 紧急解封"; }
+const wchar_t* AppHotkeyDesc(void)    { return L"F11 看大画面   F12 窗口复位   Ctrl+Alt+F10 紧急解封"; }
 
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int)
 {

@@ -94,7 +94,7 @@ void StatusUiBuildText(wchar_t* s, int cch)
         HasBroadcastWindow() ? L"有" : L"无", BcastFixCount(),
         MirrorWindow() ? (IsWindowVisible(MirrorWindow()) ? L"显示中" : L"已就绪(未显示)") : L"关闭",
         NeedFallbackUi() ? L"镜像/切桌面 可用（广播在别的桌面上）"
-                         : L"镜像已隐藏；F8 = 看大画面（广播窗口铺满/还原）",
+                         : L"镜像已隐藏；F11 = 看大画面（广播窗口铺满/还原）",
         WindowizeFixCount(), ReclaimCount(),
         RelaySwallowDetected() ? L"是（在吞）" : L"否",
         g_opt.mouseRelay ? (on ? L"接管中（直驱光标）"
@@ -125,11 +125,11 @@ static void Refresh(void)
 
     // 备用入口跟着真实状态出现/隐藏（点了一个注定没反应的按钮，比没有这个按钮更糟），
     // 隐藏时把右组按钮左移补齐，避免中间空一大块。
-    // "课堂 ↔ 自己桌面"那个位置改成"看大画面（F8）"——它是路线 C 的主角，永远可用。
+    // "课堂 ↔ 自己桌面"那个位置改成"看大画面（F11）"——它是路线 C 的主角，永远可用。
     BOOL fb = NeedFallbackUi();
     if (g_btnMirror) ShowWindow(g_btnMirror, fb ? SW_SHOW : SW_HIDE);
     if (g_btnDesk) {
-        SetWindowTextW(g_btnDesk, fb ? L"切到课堂桌面" : L"看大画面（F8）");
+        SetWindowTextW(g_btnDesk, fb ? L"切到课堂桌面" : L"看大画面（F11）");
         ShowWindow(g_btnDesk, SW_SHOW);
     }
 
@@ -193,8 +193,8 @@ static LRESULT CALLBACK UiProc(HWND h, UINT m, WPARAM w, LPARAM l)
                                    WS_CHILD | WS_VISIBLE | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL,
                                    12, 12, 574, 300, h, (HMENU)IDC_STATUS, NULL, NULL);
         struct { int id; const wchar_t* text; int x, y, cx, cy; } btns[] = {
-            { IDC_DESK,    L"看大画面（F8）",  12,  322, 120, 30 },   // 第一位：看画面
-            { IDC_FIXNOW,  L"窗口复位（F9）",  140, 322, 120, 30 },   // 第二位：复位
+            { IDC_DESK,    L"看大画面（F11）", 12,  322, 120, 30 },   // 第一位：看画面
+            { IDC_FIXNOW,  L"窗口复位（F12）", 140, 322, 120, 30 },   // 第二位：复位
             { IDC_MIRROR,  L"镜像窗口",        268, 322, 106, 30 },
             { IDC_OPENLOG, L"打开日志",        394, 322, 96,  30 },
             { IDC_QUIT,    L"退出程序",        498, 322, 86,  30 },

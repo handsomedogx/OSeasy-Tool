@@ -6,7 +6,7 @@
 
 // 由 main.cpp 实现：面板上的"退出程序"按钮走这里（走正常退出路径，不是 TerminateProcess）
 void AppRequestExit(void);
-// 由 main.cpp 实现：实际生效的热键说明（裸 F8/F9 抢不到会退回 Ctrl+Alt，面板要显示真实情况）
+// 由 main.cpp 实现：实际生效的热键说明（裸 F11/F12 抢不到会退回 Ctrl+Alt，面板要显示真实情况）
 const wchar_t* AppHotkeyDesc(void);
 
 void StatusUiShow(void);     // 没建就建，已有就前置
